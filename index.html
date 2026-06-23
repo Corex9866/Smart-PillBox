@@ -1,0 +1,2130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DoseMate Pro — Smart Medication Management</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1D4ED8">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cream:#F4F6FB; --ink:#0D1B35; --ink-soft:#556080; --ink-faint:#B0BAD0;
+  --blue:#1D4ED8; --blue-light:#3B82F6; --blue-bg:#EEF3FF; --blue-dark:#1338A8;
+  --amber:#C97B08; --amber-bg:#FEF5DC; --amber-border:#F5D78A;
+  --rose:#C0392B; --rose-bg:#FDECEA; --rose-border:#F5BFBB;
+  --green:#1A6E45; --green-bg:#E6F5ED; --green-border:#A8DFC0;
+  --purple:#6D28D9; --purple-bg:#F3F0FF;
+  --border:#DDE4F0; --white:#FFFFFF; --sw:268px;
+  --shadow-sm:0 1px 4px rgba(13,27,53,.06); --shadow:0 4px 20px rgba(13,27,53,.09); --shadow-lg:0 12px 40px rgba(13,27,53,.14);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);-webkit-font-smoothing:antialiased}
+[x-cloak]{display:none!important}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-thumb{background:var(--ink-faint);border-radius:10px}
+
+/* ── UTILS ── */
+.serif{font-family:'DM Serif Display',serif}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:3px 9px;border-radius:20px}
+.badge-blue{background:var(--blue-bg);color:var(--blue)}
+.badge-green{background:var(--green-bg);color:var(--green)}
+.badge-rose{background:var(--rose-bg);color:var(--rose)}
+.badge-amber{background:var(--amber-bg);color:var(--amber)}
+.badge-purple{background:var(--purple-bg);color:var(--purple)}
+
+/* ── LOGIN ── */
+.login-wrap{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1338A8 0%,#1D4ED8 40%,#2563EB 100%)}
+.login-bg-orb{position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none}
+.login-card{position:relative;z-index:2;background:var(--white);border-radius:24px;padding:52px;width:420px;box-shadow:var(--shadow-lg)}
+.login-logo-wrap{width:52px;height:52px;background:var(--blue);border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:28px;box-shadow:0 6px 20px rgba(29,78,216,.35)}
+.login-logo-wrap svg{width:28px;height:28px;color:#fff}
+.login-card h1{font-family:'DM Serif Display',serif;font-size:30px;color:var(--ink);margin-bottom:6px}
+.login-card>p{color:var(--ink-soft);font-size:14px;margin-bottom:36px}
+.fl{margin-bottom:16px}
+.fl label{display:block;font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:6px}
+.fl input{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);outline:none;transition:.15s}
+.fl input:focus{border-color:var(--blue);background:#fff}
+.btn-primary{width:100%;background:var(--blue);color:#fff;padding:13px;border-radius:10px;font-size:14px;font-weight:700;border:none;cursor:pointer;letter-spacing:.02em;transition:.15s}
+.btn-primary:hover{background:var(--blue-dark)}
+.btn-google{width:100%;background:#fff;border:1.5px solid var(--border);padding:12px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;color:var(--ink);margin-bottom:14px;transition:.15s}
+.btn-google:hover{background:var(--cream)}
+.divider{display:flex;align-items:center;gap:10px;margin-bottom:14px;color:var(--ink-faint);font-size:12px}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* ── APP SHELL ── */
+.shell{display:flex;height:100vh;overflow:hidden}
+
+/* ── SIDEBAR ── */
+.sidebar{width:var(--sw);flex-shrink:0;background:var(--ink);display:flex;flex-direction:column;overflow:hidden}
+.sb-top{padding:26px 20px 20px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sb-logo{display:flex;align-items:center;gap:12px}
+.sb-icon{width:38px;height:38px;background:var(--blue);border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sb-icon svg{width:20px;height:20px;color:#fff}
+.sb-brand{font-family:'DM Serif Display',serif;font-size:18px;color:#fff;letter-spacing:-.01em}
+.sb-brand small{display:block;font-family:'DM Sans',sans-serif;font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-top:1px}
+.sb-nav{padding:14px 12px;flex:1;overflow-y:auto}
+.sb-section{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.25);padding:10px 10px 4px}
+.sb-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;font-size:13.5px;font-weight:500;color:rgba(255,255,255,.55);cursor:pointer;transition:.12s;width:100%;border:none;background:none;text-align:left;margin-bottom:2px}
+.sb-item:hover{background:rgba(255,255,255,.07);color:rgba(255,255,255,.85)}
+.sb-item.active{background:rgba(29,78,216,.5);color:#fff}
+.sb-item .si{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sb-item.active .si{background:var(--blue)}
+.sb-item .si svg{width:15px;height:15px}
+.sb-item .sb-badge{margin-left:auto;background:var(--rose);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px}
+.sb-foot{padding:14px 12px;border-top:1px solid rgba(255,255,255,.08)}
+.sb-user{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;background:rgba(255,255,255,.06)}
+.sb-avatar{width:34px;height:34px;border-radius:9px;background:var(--blue);color:#fff;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sb-uname{font-size:13px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-urole{font-size:11px;color:rgba(255,255,255,.4)}
+.sb-logout{background:none;border:none;cursor:pointer;padding:4px;border-radius:6px;color:rgba(255,255,255,.3);transition:.12s;margin-left:auto;flex-shrink:0}
+.sb-logout:hover{color:#fff}
+.sb-logout svg{width:15px;height:15px}
+
+/* ── TOPBAR ── */
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+.topbar{position:sticky;top:0;background:rgba(244,246,251,.94);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 32px;height:62px;display:flex;align-items:center;justify-content:space-between;z-index:30}
+.topbar-title{font-family:'DM Serif Display',serif;font-size:21px;color:var(--ink)}
+.topbar-right{display:flex;align-items:center;gap:10px;position:relative}
+.ic-btn{width:36px;height:36px;border-radius:9px;border:1.5px solid var(--border);background:var(--white);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.12s;position:relative;color:var(--ink-soft)}
+.ic-btn:hover{background:var(--blue-bg);border-color:var(--blue-light);color:var(--blue)}
+.ic-btn svg{width:16px;height:16px}
+.notif-dot{position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:var(--rose);border:2px solid #fff}
+.health-chip{display:flex;align-items:center;gap:6px;padding:5px 12px;background:var(--green-bg);border:1px solid var(--green-border);border-radius:20px;font-size:12px;font-weight:600;color:var(--green)}
+.hc-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse-dot 2.5s ease-in-out infinite}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.4}}
+.save-chip{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:5px 12px;border-radius:20px;transition:.2s}
+.save-chip.saving{background:var(--blue-bg);color:var(--blue)}
+.save-chip.saved{background:var(--green-bg);color:var(--green)}
+.save-chip.error{background:var(--rose-bg);color:var(--rose)}
+
+/* ── SMART PILLBOX DEVICE PANEL ── */
+.device-panel{background:var(--white);border:1.5px solid var(--border);border-radius:16px;padding:20px 24px;margin-bottom:22px}
+.dp-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px}
+.dp-title{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:700;color:var(--ink)}
+.dp-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.dp-dot.online{background:var(--green);animation:pulse-dot 2s infinite}
+.dp-dot.offline{background:var(--rose)}
+.dp-slots{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.dp-slot{border:1.5px solid var(--border);border-radius:12px;padding:14px;text-align:center;transition:.15s;position:relative;background:var(--cream)}
+.dp-slot.active{border-color:var(--blue);background:var(--blue-bg)}
+.dp-slot.taken{border-color:var(--green);background:var(--green-bg)}
+.dp-slot.wrong{border-color:var(--rose);background:var(--rose-bg);animation:shake .4s ease}
+.dp-slot.toomany{border-color:var(--amber);background:var(--amber-bg)}
+.dp-slot-num{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:4px}
+.dp-slot-name{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dp-slot-weight{font-size:20px;font-weight:700;font-family:'DM Serif Display',serif;color:var(--ink)}
+.dp-slot-unit{font-size:10px;color:var(--ink-soft)}
+.dp-slot-status{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-top:6px;padding:2px 8px;border-radius:20px;display:inline-block}
+.dp-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.dp-stat{background:var(--cream);border-radius:10px;padding:10px 12px}
+.dp-stat-label{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:3px}
+.dp-stat-val{font-size:15px;font-weight:700;color:var(--ink)}
+.dp-log{border-top:1px solid var(--border);padding-top:12px;max-height:120px;overflow-y:auto}
+.dp-log-row{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--ink-soft);padding:4px 0;border-bottom:1px solid var(--border)}
+.dp-log-row:last-child{border-bottom:none}
+.dp-log-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.dp-log-dot.success{background:var(--green)}
+.dp-log-dot.wrong{background:var(--rose)}
+.dp-log-dot.toomany{background:var(--amber)}
+.dp-log-dot.missed{background:var(--rose)}
+.dp-log-dot.info{background:var(--blue)}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+
+/* ── NOTIF PANEL ── */
+.notif-panel{position:absolute;top:50px;right:0;width:340px;background:var(--white);border:1.5px solid var(--border);border-radius:16px;box-shadow:var(--shadow-lg);z-index:60;overflow:hidden}
+.np-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.np-head h4{font-size:13px;font-weight:700;color:var(--ink)}
+.np-head button{font-size:11px;font-weight:600;color:var(--blue);background:none;border:none;cursor:pointer}
+.np-item{padding:12px 18px;border-bottom:1px solid var(--border);border-left:3px solid transparent;transition:.1s;cursor:default}
+.np-item:last-child{border-bottom:none}
+.np-item:hover{background:var(--cream)}
+.np-item.missed{border-left-color:var(--rose)}
+.np-item.low{border-left-color:var(--amber)}
+.np-item.info{border-left-color:var(--blue)}
+.np-ititle{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-soft);margin-bottom:2px}
+.np-item.missed .np-ititle{color:var(--rose)}
+.np-item.low .np-ititle{color:var(--amber)}
+.np-item.info .np-ititle{color:var(--blue)}
+.np-imsg{font-size:13px;color:var(--ink);margin-bottom:5px}
+.np-itime{font-size:11px;color:var(--ink-faint)}
+.np-mread{font-size:11px;font-weight:600;color:var(--blue);background:none;border:none;cursor:pointer}
+.np-empty{padding:32px 20px;text-align:center;color:var(--ink-soft);font-size:13px}
+
+/* ── PAGE ── */
+.page{padding:28px 32px;animation:fadeUp .25s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── HERO ── */
+.hero{background:linear-gradient(130deg,var(--blue-dark) 0%,var(--blue) 60%,#3B6EF5 100%);border-radius:20px;padding:32px 36px;margin-bottom:24px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:space-between;gap:24px}
+.hero::before{content:'';position:absolute;right:-50px;top:-60px;width:280px;height:280px;border-radius:50%;background:rgba(255,255,255,.05)}
+.hero::after{content:'';position:absolute;right:120px;bottom:-50px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.04)}
+.hero-text{position:relative;z-index:2}
+.hero-eye{font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:8px}
+.hero-title{font-family:'DM Serif Display',serif;font-size:30px;color:#fff;line-height:1.15;margin-bottom:8px}
+.hero-quote{font-size:13.5px;color:rgba(255,255,255,.7);font-style:italic;max-width:360px;line-height:1.6}
+.hero-right{display:flex;gap:12px;position:relative;z-index:2;flex-shrink:0}
+.hstat{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:16px 20px;text-align:center;min-width:105px}
+.hstat-val{font-family:'DM Serif Display',serif;font-size:30px;color:#fff;line-height:1;margin-bottom:4px}
+.hstat-lbl{font-size:10px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.55)}
+.stock-panel{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:16px 18px;min-width:195px}
+.sp-title{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:12px}
+.sp-row{margin-bottom:9px}
+.sp-row:last-child{margin-bottom:0}
+.sp-meta{display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,.8);margin-bottom:4px}
+.sp-cnt{font-weight:700}
+.sp-cnt.low{color:#fca5a5}
+.sp-bar{height:4px;border-radius:4px;background:rgba(255,255,255,.2);overflow:hidden}
+.sp-fill{height:100%;border-radius:4px;background:#93c5fd;transition:width .4s}
+.sp-fill.low{background:#fca5a5}
+.streak-panel{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:16px 18px;text-align:center;min-width:110px}
+.streak-flame{font-size:32px;line-height:1;margin-bottom:4px}
+.streak-num{font-family:'DM Serif Display',serif;font-size:26px;color:#fff;line-height:1;margin-bottom:2px}
+.streak-lbl{font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.5)}
+
+/* ── STAT CARDS ── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.scard{background:var(--white);border:1.5px solid var(--border);border-radius:16px;padding:20px;transition:.15s;position:relative;overflow:hidden}
+.scard:hover{box-shadow:var(--shadow);border-color:var(--blue-light)}
+.scard::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:16px 16px 0 0}
+.scard.c-blue::before{background:var(--blue)}
+.scard.c-green::before{background:var(--green)}
+.scard.c-rose::before{background:var(--rose)}
+.scard.c-amber::before{background:var(--amber)}
+.scard.c-purple::before{background:var(--purple)}
+.sc-label{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px}
+.sc-val{font-family:'DM Serif Display',serif;font-size:34px;color:var(--ink);line-height:1;margin-bottom:5px}
+.sc-sub{font-size:12px;color:var(--ink-soft)}
+.sc-bar{height:4px;background:var(--border);border-radius:4px;margin-top:12px;overflow:hidden}
+.sc-fill{height:100%;border-radius:4px;background:var(--blue);transition:width .5s}
+
+/* ── CARDS ── */
+.card{background:var(--white);border:1.5px solid var(--border);border-radius:16px;overflow:hidden}
+.card-head{padding:18px 22px 0;display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:14px;font-weight:700;color:var(--ink)}
+.card-sub{font-size:12px;color:var(--ink-soft)}
+.card-body{padding:18px 22px}
+
+/* ── DOSE ITEMS ── */
+.dose-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;border:1.5px solid var(--border);margin-bottom:8px;transition:.12s;background:var(--white)}
+.dose-item:hover{border-color:var(--blue-light);box-shadow:0 2px 10px rgba(29,78,216,.07)}
+.dose-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.dose-name{font-size:14px;font-weight:600;color:var(--ink)}
+.dose-meta{font-size:11px;color:var(--ink-soft);margin-top:2px}
+.btn-take{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:5px 12px;border-radius:7px;border:none;background:var(--blue);color:#fff;cursor:pointer;transition:.12s;white-space:nowrap}
+.btn-take:hover{background:var(--blue-dark)}
+
+/* ── DASH GRID ── */
+.dash-grid{display:grid;grid-template-columns:1fr 340px;gap:20px}
+
+/* ── HISTORY TAB ── */
+.hist-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:14px}
+.cal-day{aspect-ratio:1;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;cursor:default}
+.cal-day.taken{background:var(--green-bg);color:var(--green)}
+.cal-day.missed{background:var(--rose-bg);color:var(--rose)}
+.cal-day.partial{background:var(--amber-bg);color:var(--amber)}
+.cal-day.empty{background:var(--border);color:var(--ink-faint)}
+.cal-day.future{background:transparent;color:var(--ink-faint);border:1.5px dashed var(--border)}
+.timeline-item{display:flex;gap:14px;margin-bottom:16px}
+.tl-dot-wrap{display:flex;flex-direction:column;align-items:center;gap:0}
+.tl-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;margin-top:3px}
+.tl-line{width:2px;flex:1;background:var(--border);margin-top:4px}
+.tl-body{flex:1;padding-bottom:16px}
+.tl-time{font-size:11px;font-weight:700;color:var(--ink-soft);margin-bottom:3px}
+.tl-name{font-size:13px;font-weight:600;color:var(--ink)}
+.tl-slot{font-size:11px;color:var(--ink-faint)}
+
+/* ── PILLS TAB ── */
+.pills-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.pill-card{background:var(--white);border:1.5px solid var(--border);border-radius:16px;padding:22px;position:relative;transition:.15s}
+.pill-card:hover{box-shadow:var(--shadow);border-color:var(--blue-light)}
+.pc-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+.slot-tag-input{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;background:var(--blue-bg);color:var(--blue);border-radius:6px;border:none;outline:none;font-family:'DM Sans',sans-serif;width:80px}
+.pc-cnt label{display:block;font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:2px;text-align:right}
+.pc-cnt input{font-size:20px;font-weight:700;color:var(--ink);background:none;border:none;border-bottom:1.5px solid var(--border);text-align:right;width:70px;outline:none;font-family:'DM Sans',sans-serif}
+.pc-cnt input:focus{border-color:var(--blue)}
+.pill-name-in{font-size:19px;font-weight:700;color:var(--ink);background:none;border:none;border-bottom:1.5px solid transparent;outline:none;width:100%;font-family:'DM Serif Display',serif;margin-bottom:14px;padding-bottom:4px;transition:.15s}
+.pill-name-in:focus{border-color:var(--blue)}
+.pd-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;background:var(--cream);border-radius:12px;padding:14px;margin-bottom:12px}
+.pd-field label{display:block;font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:4px}
+.pd-field input,.pd-field select,.pd-field textarea{font-size:13px;font-weight:600;color:var(--blue);background:none;border:none;outline:none;width:100%;font-family:'DM Sans',sans-serif}
+.day-btns{display:flex;gap:5px;margin-bottom:12px}
+.day-btn{width:30px;height:30px;border-radius:50%;font-size:10px;font-weight:700;border:1.5px solid var(--border);background:none;color:var(--ink-soft);cursor:pointer;transition:.12s}
+.day-btn.sel{background:var(--blue);border-color:var(--blue);color:#fff}
+.refill-btn{width:100%;padding:10px;border-radius:10px;background:var(--rose-bg);border:1.5px solid var(--rose-border);color:var(--rose);font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;transition:.12s}
+.refill-btn:hover{background:#fad6d3}
+.rm-pill-btn{position:absolute;top:14px;right:14px;font-size:11px;font-weight:600;color:var(--ink-faint);background:none;border:none;cursor:pointer;opacity:0;transition:.15s}
+.pill-card:hover .rm-pill-btn{opacity:1}
+.rm-pill-btn:hover{color:var(--rose)}
+.add-pill-card{border:2px dashed var(--border);border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:36px;cursor:pointer;transition:.12s;background:none;width:100%}
+.add-pill-card:hover{border-color:var(--blue-light);background:var(--blue-bg)}
+.apc-plus{width:44px;height:44px;border-radius:12px;background:var(--blue-bg);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:26px;transition:.12s}
+.add-pill-card:hover .apc-plus{background:var(--blue);color:#fff}
+.save-btn{width:100%;padding:13px;border-radius:10px;background:var(--blue);color:#fff;font-size:13px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;border:none;cursor:pointer;transition:.15s;margin-top:8px}
+.save-btn:hover{background:var(--blue-dark)}
+.save-btn.saved{background:var(--green)}
+.save-btn.error{background:var(--rose)}
+
+/* ── SCHEDULE ── */
+.sch-table{width:100%;border-collapse:collapse}
+.sch-table th{padding:12px 14px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);border-bottom:1.5px solid var(--border);text-align:center}
+.sch-table th:first-child{text-align:left}
+.sch-table td{padding:12px 14px;border-bottom:1px solid var(--border);font-size:13px;text-align:center}
+.sch-table td:first-child{text-align:left}
+.sch-table tr:last-child td{border-bottom:none}
+.sch-table tr:hover td{background:var(--cream)}
+
+/* ── DOCTORS ── */
+.doc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.doc-card{background:var(--white);border:1.5px solid var(--border);border-radius:16px;padding:22px;transition:.15s;position:relative}
+.doc-card:hover{box-shadow:var(--shadow);border-color:var(--blue-light)}
+.doc-avatar{width:48px;height:48px;border-radius:14px;background:var(--blue-bg);display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:14px}
+.doc-name{font-size:15px;font-weight:700;color:var(--ink);margin-bottom:3px}
+.doc-spec{font-size:12px;color:var(--blue);font-weight:600;margin-bottom:12px}
+.doc-info{display:flex;flex-direction:column;gap:6px}
+.doc-info-row{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--ink-soft)}
+.doc-info-row svg{width:13px;height:13px;flex-shrink:0;color:var(--ink-faint)}
+.add-doc-card{border:2px dashed var(--border);border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:32px;cursor:pointer;transition:.12s;background:none}
+.add-doc-card:hover{border-color:var(--blue-light);background:var(--blue-bg)}
+
+/* ── SIDE EFFECTS ── */
+.se-list{display:flex;flex-direction:column;gap:10px}
+.se-item{background:var(--white);border:1.5px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;align-items:flex-start;gap:14px}
+.se-sev{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.se-sev.mild{background:var(--amber)}
+.se-sev.moderate{background:var(--rose)}
+.se-sev.severe{background:#7C0000}
+.se-med{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--blue);margin-bottom:3px}
+.se-note{font-size:13px;color:var(--ink)}
+.se-date{font-size:11px;color:var(--ink-faint);margin-top:3px}
+
+/* ── ANALYTICS ── */
+.analytics-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+.analytic-card{background:var(--white);border:1.5px solid var(--border);border-radius:16px;padding:20px;text-align:center}
+.ac-icon{font-size:28px;margin-bottom:10px}
+.ac-val{font-family:'DM Serif Display',serif;font-size:32px;color:var(--ink);margin-bottom:4px}
+.ac-label{font-size:12px;color:var(--ink-soft);font-weight:500}
+
+/* ── SETTINGS ── */
+.settings-max{max-width:680px}
+.sett-card{background:var(--white);border:1.5px solid var(--border);border-radius:16px;padding:26px;margin-bottom:16px}
+.sett-card h3{font-size:15px;font-weight:700;color:var(--ink);margin-bottom:18px}
+.sett-fields{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.sett-toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+.sett-toggle-row:last-child{border-bottom:none}
+.toggle-wrap{position:relative;display:inline-flex}
+.toggle-wrap input{opacity:0;width:0;height:0;position:absolute}
+.toggle-slider{width:40px;height:22px;background:var(--border);border-radius:11px;cursor:pointer;transition:.2s;position:relative}
+.toggle-wrap input:checked + .toggle-slider{background:var(--blue)}
+.toggle-slider::before{content:'';position:absolute;width:16px;height:16px;border-radius:50%;background:#fff;top:3px;left:3px;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle-wrap input:checked + .toggle-slider::before{transform:translateX(18px)}
+
+/* ── MODAL ── */
+.modal-bg{position:fixed;inset:0;background:rgba(13,27,53,.55);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;z-index:100}
+.modal-card{background:var(--white);border-radius:20px;padding:36px;width:460px;box-shadow:var(--shadow-lg);border:1.5px solid var(--border)}
+.modal-eye{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--blue);margin-bottom:10px}
+.modal-title{font-family:'DM Serif Display',serif;font-size:26px;color:var(--ink);line-height:1.2;margin-bottom:14px}
+.modal-info{background:var(--blue-bg);border:1px solid #bfdbfe;border-radius:12px;padding:13px 15px;font-size:13px;color:var(--blue);margin-bottom:22px;line-height:1.5}
+.modal-actions{display:flex;gap:10px}
+.m-btn-p{flex:1;padding:13px;background:var(--blue);color:#fff;border:none;border-radius:11px;font-size:14px;font-weight:700;cursor:pointer;transition:.12s}
+.m-btn-p:hover{background:var(--blue-dark)}
+.m-btn-s{padding:13px 16px;background:var(--cream);color:var(--ink-soft);border:1.5px solid var(--border);border-radius:11px;font-size:14px;font-weight:600;cursor:pointer;transition:.12s}
+.m-btn-s:hover{background:var(--border)}
+.form-modal{width:540px}
+
+/* ── SOS BTN ── */
+.sos-btn{display:flex;align-items:center;gap:8px;background:var(--rose);color:#fff;border:none;border-radius:10px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:.04em;transition:.15s;box-shadow:0 4px 14px rgba(192,57,43,.3)}
+.sos-btn:hover{background:#a93226;transform:scale(1.02)}
+.sos-btn svg{width:16px;height:16px}
+
+/* ── DRUG INTERACTION ── */
+.interaction-warn{background:var(--amber-bg);border:1.5px solid var(--amber-border);border-radius:12px;padding:12px 15px;margin-top:10px;font-size:13px;color:var(--amber);display:flex;gap:10px;align-items:flex-start}
+.interaction-warn svg{width:16px;height:16px;flex-shrink:0;margin-top:1px}
+
+/* ── EMPTY STATE ── */
+.empty-state{text-align:center;padding:48px 24px;color:var(--ink-soft)}
+.empty-state .es-icon{font-size:40px;margin-bottom:12px;opacity:.4}
+.empty-state p{font-size:14px}
+
+/* ── RESPONSIVE TOPBAR INPUT ── */
+.search-bar{display:flex;align-items:center;gap:8px;background:var(--white);border:1.5px solid var(--border);border-radius:10px;padding:6px 12px;width:220px;transition:.15s}
+.search-bar:focus-within{border-color:var(--blue)}
+.search-bar svg{width:14px;height:14px;color:var(--ink-faint);flex-shrink:0}
+.search-bar input{border:none;outline:none;background:transparent;font-size:13px;color:var(--ink);width:100%;font-family:'DM Sans',sans-serif}
+
+/* ── PRINT REPORT AREA ── */
+@media print{
+  .sidebar,.topbar,.no-print{display:none!important}
+  .main{overflow:visible}
+  .page{padding:0}
+}
+</style>
+</head>
+<body x-data="app()" x-init="init()">
+
+<!-- ═══ LOGIN ═══ -->
+<div x-show="!loggedIn" x-cloak class="login-wrap">
+  <div class="login-bg-orb" style="width:400px;height:400px;background:rgba(59,130,246,.25);top:-100px;left:-100px"></div>
+  <div class="login-bg-orb" style="width:300px;height:300px;background:rgba(29,78,216,.2);bottom:-80px;right:-60px"></div>
+  <div class="login-card">
+    <div class="login-logo-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/><path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/></svg>
+    </div>
+    <h1>Welcome back</h1>
+    <p>Sign in to manage your medication schedule</p>
+    <button @click="googleLogin()" class="btn-google">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:18px;height:18px">
+      Continue with Google
+    </button>
+    <div class="divider">or sign in with email</div>
+    <div class="fl"><label>Email address</label><input x-model="email" type="email" placeholder="you@example.com"></div>
+    <div class="fl" style="margin-bottom:24px"><label>Password</label><input x-model="password" type="password" placeholder="••••••••"></div>
+    <button @click="login()" class="btn-primary">Sign In</button>
+    <p style="text-align:center;font-size:12px;color:var(--ink-faint);margin-top:16px">Protected by Firebase Authentication</p>
+  </div>
+</div>
+
+<!-- ═══ APP SHELL ═══ -->
+<div class="shell" x-show="loggedIn" x-cloak>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sb-top">
+      <div class="sb-logo">
+        <div class="sb-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/><path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/></svg>
+        </div>
+        <div class="sb-brand">DoseMate</div>
+      </div>
+    </div>
+    <nav class="sb-nav">
+      <div class="sb-section">Main</div>
+      <template x-for="item in menu" :key="item.id">
+        <button @click="tab=item.id" :class="tab===item.id?'active':''" class="sb-item">
+          <div class="si">
+            <svg x-show="item.id==='dash'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+            <svg x-show="item.id==='pills'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg>
+            <svg x-show="item.id==='schedule'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+
+            <svg x-show="item.id==='doctors'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9Z"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="12" x2="12" y1="12" y2="16"/><line x1="10" x2="14" y1="14" y2="14"/></svg>
+            <svg x-show="item.id==='sideeffects'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>
+            <svg x-show="item.id==='analytics'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></svg>
+            <svg x-show="item.id==='family'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <svg x-show="item.id==='pharmacy'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9Z"/><path d="m3 9 2.45-4.9A2 2 0 0 1 7.24 3h9.52a2 2 0 0 1 1.8 1.1L21 9"/><path d="M12 3v6"/></svg>
+            <svg x-show="item.id==='settings'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </div>
+          <span x-text="item.name"></span>
+          <span class="sb-badge" x-show="item.id==='sideeffects' && sideEffects.length>0" x-text="sideEffects.length"></span>
+          <span class="sb-badge" x-show="item.id==='dash' && notifications.filter(n=>n.type==='missed').length>0" x-text="notifications.filter(n=>n.type==='missed').length"></span>
+          <span class="sb-badge" x-show="item.id==='pharmacy' && pills.some(p=>p.count<=(pharmacyNotes.find(n=>n.medication===p.name)?.refillAt||7))" style="background:var(--amber)">!</span>
+        </button>
+      </template>
+    </nav>
+    <div class="sb-foot">
+      <div class="sb-user">
+        <div class="sb-avatar" x-text="(user.patient||'A')[0].toUpperCase()"></div>
+        <div style="flex:1;min-width:0">
+          <div class="sb-uname" x-text="user.patient||'Patient'"></div>
+          <div class="sb-urole">Patient Account</div>
+        </div>
+        <button @click="logout()" class="sb-logout" title="Sign out">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="topbar-title" x-text="menu.find(m=>m.id===tab)?.name||''"></div>
+      <div class="topbar-right">
+        <div class="health-chip no-print">
+          <div class="hc-dot"></div>
+          <span>Healthy</span>
+        </div>
+
+        <div x-show="saveStatus!=='idle'" x-transition class="save-chip no-print" :class="saveStatus">
+          <span x-show="saveStatus==='saving'">⟳ Saving…</span>
+          <span x-show="saveStatus==='saved'">✓ Saved</span>
+          <span x-show="saveStatus==='error'">⚠ Failed</span>
+        </div>
+
+        <!-- SOS -->
+        <button @click="triggerSOS()" class="sos-btn no-print">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.99 12c-.98-2.62-.98-5.42-.5-7.5A2 2 0 0 1 6.68 3h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L10.09 10.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 24 18v.92"/></svg>
+          SOS
+        </button>
+
+        <!-- Notifications -->
+        <button @click="showNotifs=!showNotifs" class="ic-btn no-print">
+          <span class="notif-dot" x-show="notifications.length>0"></span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        </button>
+
+        <!-- Print Report -->
+        <button @click="printReport()" class="ic-btn no-print" title="Print Report">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
+        </button>
+
+        <!-- Notifications panel -->
+        <div x-show="showNotifs" x-cloak @click.away="showNotifs=false" x-transition class="notif-panel">
+          <div class="np-head">
+            <h4>Alerts <span x-show="notifications.length>0" style="background:var(--rose-bg);color:var(--rose);font-size:10px;padding:1px 7px;border-radius:10px;margin-left:6px" x-text="notifications.length"></span></h4>
+            <button @click="notifications=[];showNotifs=false">Clear all</button>
+          </div>
+          <div style="max-height:340px;overflow-y:auto">
+            <template x-for="(n,i) in notifications" :key="i">
+              <div class="np-item" :class="n.type">
+                <div class="np-ititle" x-text="n.title"></div>
+                <div class="np-imsg" x-text="n.msg"></div>
+                <div style="display:flex;align-items:center;justify-content:space-between">
+                  <span class="np-itime" x-text="n.time||''"></span>
+                  <button @click="notifications.splice(i,1)" class="np-mread">Dismiss</button>
+                </div>
+              </div>
+            </template>
+            <div x-show="notifications.length===0" class="np-empty">
+              <div style="font-size:24px;margin-bottom:6px">✓</div>
+              All clear — no active alerts
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ══════════ DASHBOARD ══════════ -->
+    <div x-show="tab==='dash'" x-cloak class="page">
+      <!-- Hero -->
+      <div class="hero">
+        <div class="hero-text">
+          <div class="hero-eye" x-text="'Good ' + timeOfDay() + ', ' + (user.patient||'Patient')"></div>
+          <div class="hero-title">Stay strong &amp; on track.</div>
+          <div class="hero-quote" x-text="quote"></div>
+        </div>
+        <div class="hero-right">
+          <div class="streak-panel">
+            <div class="streak-flame">🔥</div>
+            <div class="streak-num" x-text="streakDays"></div>
+            <div class="streak-lbl">Day Streak</div>
+          </div>
+          <div class="hstat">
+            <div class="hstat-val" x-text="adherence+'%'"></div>
+            <div class="hstat-lbl">Adherence</div>
+          </div>
+          <div class="hstat">
+            <div class="hstat-val" x-text="nextDoseLabel"></div>
+            <div class="hstat-lbl">Next Dose</div>
+          </div>
+          <div class="stock-panel">
+            <div class="sp-title">Medicine Stock</div>
+            <template x-for="p in pills">
+              <div class="sp-row">
+                <div class="sp-meta">
+                  <span>💊 <span x-text="p.name"></span></span>
+                  <span class="sp-cnt" :class="p.count<=5?'low':''" x-text="p.count+' left'"></span>
+                </div>
+                <div class="sp-bar"><div class="sp-fill" :class="p.count<=5?'low':''" :style="'width:'+getStockPct(p.count)+'%'"></div></div>
+              </div>
+            </template>
+            <div x-show="pills.length===0" style="color:rgba(255,255,255,.4);font-size:12px">No medications added</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ Smart Pillbox Hardware Panel ══ -->
+      <div class="device-panel">
+        <div class="dp-header">
+          <div class="dp-title">
+            <div class="dp-dot" :class="hw.online?'online':'offline'"></div>
+            <span>Smart Pill Box</span>
+            <span class="badge" :class="hw.online?'badge-green':'badge-rose'" x-text="hw.online?'Online':'Offline'"></span>
+            <span class="badge badge-blue" x-text="'State: '+hw.state" x-show="hw.online"></span>
+          </div>
+          <span style="font-size:12px;color:var(--ink-soft)">Last seen: <strong x-text="hw.lastSeenLabel"></strong></span>
+        </div>
+
+        <!-- Weight sensor stats per slot -->
+        <div class="dp-slots">
+          <template x-for="(pill,i) in pills.slice(0,3)" :key="i">
+            <div :class="hwSlotClass(i)">
+              <div class="dp-slot-num" x-text="'Slot '+(i+1)"></div>
+              <div class="dp-slot-name" x-text="pill.name"></div>
+              <div class="dp-slot-weight" x-text="hw.weights[i]?hw.weights[i].toFixed(1):'—'"></div>
+              <div class="dp-slot-unit">grams</div>
+              <div class="dp-slot-status" :style="hwSlotStatusStyle(i)" x-text="hwSlotStatusLabel(i)"></div>
+            </div>
+          </template>
+          <!-- Placeholder slots if fewer than 3 pills -->
+          <template x-for="i in Math.max(0,3-pills.length)" :key="'ph'+i">
+            <div class="dp-slot">
+              <div class="dp-slot-num" x-text="'Slot '+(pills.length+i)"></div>
+              <div class="dp-slot-name" style="color:var(--ink-faint)">Empty</div>
+              <div class="dp-slot-weight">—</div>
+              <div class="dp-slot-unit">grams</div>
+            </div>
+          </template>
+        </div>
+
+        <!-- Summary stats -->
+        <div class="dp-stats">
+          <div class="dp-stat">
+            <div class="dp-stat-label">Active Slot</div>
+            <div class="dp-stat-val" x-text="'Slot '+hw.activeSlot"></div>
+          </div>
+          <div class="dp-stat">
+            <div class="dp-stat-label">Today Taken</div>
+            <div class="dp-stat-val" x-text="hw.log.filter(l=>l.type==='taken').length"></div>
+          </div>
+          <div class="dp-stat">
+            <div class="dp-stat-label">Wrong Slots</div>
+            <div class="dp-stat-val" style="color:var(--rose)" x-text="hw.log.filter(l=>l.type==='wrong').length"></div>
+          </div>
+          <div class="dp-stat">
+            <div class="dp-stat-label">Total Sensors</div>
+            <div class="dp-stat-val">3 × HX711</div>
+          </div>
+        </div>
+
+        <!-- Event log -->
+        <div class="dp-log" x-show="hw.log.length>0">
+          <div style="font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:8px">Hardware Event Log</div>
+          <template x-for="(l,i) in hw.log" :key="i">
+            <div class="dp-log-row">
+              <div class="dp-log-dot" :class="l.type"></div>
+              <span style="min-width:58px;color:var(--ink-faint)" x-text="l.time"></span>
+              <span style="font-weight:600;color:var(--ink)" x-text="'Slot '+l.slot"></span>
+              <span style="margin-left:6px" x-text="l.event"></span>
+            </div>
+          </template>
+        </div>
+        <div x-show="hw.log.length===0" style="text-align:center;font-size:12px;color:var(--ink-faint);padding:10px 0">
+          No hardware events yet — upload the firmware to your ESP8266 to get started
+        </div>
+      </div>
+
+      <!-- Stats Row -->
+      <div class="stats-row">
+        <div class="scard c-blue">
+          <div class="sc-label">Daily Adherence</div>
+          <div class="sc-val" x-text="adherence+'%'"></div>
+          <div class="sc-sub">Today's completion rate</div>
+          <div class="sc-bar"><div class="sc-fill" :style="'width:'+adherence+'%'"></div></div>
+        </div>
+        <div class="scard c-green">
+          <div class="sc-label">Doses Taken</div>
+          <div class="sc-val" x-text="pills.filter(p=>p.status==='taken').length"></div>
+          <div class="sc-sub" x-text="'of ' + pills.length + ' scheduled'"></div>
+        </div>
+        <div class="scard c-rose">
+          <div class="sc-label">Missed Today</div>
+          <div class="sc-val" x-text="pills.filter(p=>p.status==='missed').length"></div>
+          <div class="sc-sub" x-text="pills.filter(p=>p.status==='missed').length===0?'All on track! 🎉':'Needs attention'"></div>
+        </div>
+        <div class="scard c-amber">
+          <div class="sc-label">Low Stock Alerts</div>
+          <div class="sc-val" x-text="pills.filter(p=>p.count<=7).length"></div>
+          <div class="sc-sub">Need refill soon</div>
+        </div>
+      </div>
+
+      <!-- Refill Alert Banner (shows when any medicine is low) -->
+      <template x-if="pills.some(p=>p.count<=(pharmacyNotes.find(n=>n.medication===p.name)?.refillAt||7))">
+        <div style="background:var(--amber-bg);border:1.5px solid var(--amber-border);border-radius:13px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:14px">
+          <div style="font-size:26px">🔔</div>
+          <div style="flex:1">
+            <div style="font-weight:700;color:var(--amber);font-size:14px">Refill Reminder</div>
+            <div style="font-size:12px;color:var(--ink-soft);margin-top:2px">
+              <template x-for="p in pills.filter(p=>p.count<=(pharmacyNotes.find(n=>n.medication===p.name)?.refillAt||7))">
+                <span style="font-weight:600;margin-right:10px" x-text="p.name+' · '+p.count+' pills left'"></span>
+              </template>
+            </div>
+          </div>
+          <button @click="tab='pharmacy'" style="padding:8px 16px;background:var(--amber);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">View Pharmacy →</button>
+        </div>
+      </template>
+
+      <!-- Chart + Today Schedule -->
+      <div class="dash-grid">
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">Weekly Adherence</div>
+            <span class="card-sub">Last 7 days</span>
+          </div>
+          <div class="card-body">
+            <canvas id="weeklyChart" style="max-height:210px"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">Today's Schedule</div>
+            <span class="card-sub" x-text="new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'})"></span>
+          </div>
+          <div class="card-body">
+            <template x-for="p in filteredPills()" :key="p.slot">
+              <div class="dose-item">
+                <div class="dose-icon" :style="p.status==='taken'?'background:var(--green-bg)':p.status==='missed'?'background:var(--rose-bg)':'background:var(--blue-bg)'">💊</div>
+                <div style="flex:1;min-width:0">
+                  <div class="dose-name" x-text="p.name"></div>
+                  <div class="dose-meta" x-text="formatTime12(p.time)+' · '+p.slot+(p.doctor?' · Dr. '+p.doctor:'')"></div>
+                </div>
+                <div style="display:flex;align-items:center;gap:7px">
+                  <span class="badge" :class="p.status==='taken'?'badge-green':p.status==='missed'?'badge-rose':'badge-blue'" x-text="p.status"></span>
+                  <button x-show="p.status!=='taken'" @click="markTaken(p)" class="btn-take">✓ Taken</button>
+                </div>
+              </div>
+            </template>
+            <div x-show="pills.length===0" class="empty-state"><div class="es-icon">💊</div><p>No medications added yet</p></div>
+          </div>
+        </div>
+      </div>
+
+
+    </div>
+
+    <!-- ══════════ MY PILLS ══════════ -->
+    <div x-show="tab==='pills'" x-cloak class="page">
+
+      <!-- Action bar — OUTSIDE the grid so it's always visible and clickable -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:12px">
+        <button @click="addPill()" style="display:flex;align-items:center;gap:10px;padding:11px 20px;background:var(--blue);color:#fff;border:none;border-radius:11px;font-size:14px;font-weight:700;cursor:pointer;transition:.15s;letter-spacing:.02em" onmouseover="this.style.background='var(--blue-dark)'" onmouseout="this.style.background='var(--blue)'">
+          <span style="font-size:20px;line-height:1;margin-top:-1px">+</span> Add New Medication
+        </button>
+        <button @click="autoSave()"
+          style="padding:11px 22px;border-radius:11px;font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;border:none;cursor:pointer;transition:.15s"
+          :style="saveStatus==='saved'?'background:var(--green);color:#fff':saveStatus==='error'?'background:var(--rose);color:#fff':'background:var(--blue-bg);color:var(--blue)'"
+          :disabled="saveStatus==='saving'">
+          <span x-show="saveStatus==='idle'||saveStatus===''">Save All Changes</span>
+          <span x-show="saveStatus==='saving'">Saving…</span>
+          <span x-show="saveStatus==='saved'">✓ Saved to Cloud</span>
+          <span x-show="saveStatus==='error'">⚠ Save Failed</span>
+        </button>
+      </div>
+
+      <!-- Empty state when no pills -->
+      <div x-show="pills.length===0" style="text-align:center;padding:60px 24px;background:var(--white);border:1.5px dashed var(--border);border-radius:16px;color:var(--ink-soft)">
+        <div style="font-size:48px;margin-bottom:12px">💊</div>
+        <div style="font-size:16px;font-weight:600;margin-bottom:6px">No medications yet</div>
+        <div style="font-size:13px">Click "Add New Medication" above to get started</div>
+      </div>
+
+      <!-- Pills grid — only pill cards, no mixed content -->
+      <div class="pills-grid" x-show="pills.length>0">
+        <template x-for="(p,index) in pills" :key="'pill-'+index">
+          <div class="pill-card">
+            <button @click="removePill(index)" class="rm-pill-btn">Remove ×</button>
+            <div class="pc-head">
+              <input type="text" x-model="p.slot" class="slot-tag-input" @change="debouncedSave()">
+              <div class="pc-cnt">
+                <label>Pill Count</label>
+                <input type="number" min="0" x-model.number="p.count" @change="debouncedSave()">
+              </div>
+            </div>
+            <input type="text" x-model="p.name" class="pill-name-in" placeholder="Medicine name" @change="debouncedSave(); checkInteractions()">
+            <div class="pd-grid">
+              <div class="pd-field"><label>Reminder Time</label><input type="time" x-model="p.time" @change="refreshAllStatuses();debouncedSave();"></div>
+              <div class="pd-field"><label>Frequency</label>
+                <select x-model="p.frequency" @change="debouncedSave()">
+                  <option>Daily</option><option>Weekly</option><option>Twice Daily</option><option>Once</option>
+                </select>
+              </div>
+              <div class="pd-field"><label>Dosage</label><input type="text" x-model="p.dosage" placeholder="e.g. 10mg" @change="debouncedSave()"></div>
+              <div class="pd-field"><label>Prescribed By</label>
+                <select x-model="p.doctor" @change="debouncedSave()">
+                  <option value="">— None —</option>
+                  <template x-for="d in doctors"><option :value="d.name" x-text="'Dr. '+d.name"></option></template>
+                </select>
+              </div>
+            </div>
+            <div class="pd-grid" style="grid-template-columns:1fr">
+              <div class="pd-field"><label>Notes / Instructions</label>
+                <textarea x-model="p.notes" @change="debouncedSave()" placeholder="e.g. Take with food, avoid grapefruit…" style="font-size:12px;color:var(--ink-soft);font-weight:400;resize:none;height:42px;line-height:1.5"></textarea>
+              </div>
+            </div>
+            <template x-if="p.frequency==='Weekly'">
+              <div class="day-btns">
+                <template x-for="d in ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']">
+                  <button @click="toggleDay(p,d);debouncedSave()" :class="p.days&&p.days.includes(d)?'sel':''" class="day-btn" x-text="d[0]"></button>
+                </template>
+              </div>
+            </template>
+            <template x-if="p.count<=6">
+              <button @click="p.count=30;addNotif('Refill Success',p.name+' restocked to 30.','info');debouncedSave()" class="refill-btn">⚠ Low Stock — Order Refill Now</button>
+            </template>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <!-- ══════════ SCHEDULE ══════════ -->
+    <div x-show="tab==='schedule'" x-cloak class="page">
+      <div class="card">
+        <table class="sch-table">
+          <thead><tr>
+            <th>Medicine &amp; Time</th>
+            <template x-for="day in ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']"><th x-text="day"></th></template>
+          </tr></thead>
+          <tbody>
+            <template x-for="p in pills" :key="p.slot">
+              <tr>
+                <td>
+                  <div style="font-weight:600;color:var(--ink)" x-text="p.name"></div>
+                  <div style="font-size:11px;color:var(--ink-soft)" x-text="formatTime12(p.time)+' · '+(p.dosage||'—')+' · '+p.frequency"></div>
+                </td>
+                <template x-for="day in ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']">
+                  <td>
+                    <template x-if="shouldShow(p,day)">
+                      <span class="badge" :class="getSchStatus(p,day).cls" x-text="getSchStatus(p,day).text"></span>
+                    </template>
+                    <template x-if="!shouldShow(p,day)"><span style="color:var(--ink-faint)">—</span></template>
+                  </td>
+                </template>
+              </tr>
+            </template>
+            <template x-if="pills.length===0"><tr><td colspan="8" class="empty-state"><div class="es-icon">📅</div><p>No medications scheduled</p></td></tr></template>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══════════ DOCTORS ══════════ -->
+    <div x-show="tab==='doctors'" x-cloak class="page">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:20px">
+        <button @click="showDoctorModal=true" class="btn-primary" style="width:auto;padding:10px 20px">+ Add Doctor</button>
+      </div>
+      <div class="doc-grid">
+        <template x-for="(doc,i) in doctors" :key="i">
+          <div class="doc-card">
+            <button @click="doctors.splice(i,1);debouncedSave()" class="rm-pill-btn">Remove ×</button>
+            <div class="doc-avatar" x-text="doc.emoji||'👨‍⚕️'"></div>
+            <div class="doc-name" x-text="'Dr. '+doc.name"></div>
+            <div class="doc-spec" x-text="doc.specialty"></div>
+            <div class="doc-info">
+              <div class="doc-info-row">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.99 12"/></svg>
+                <span x-text="doc.phone||'No phone'"></span>
+              </div>
+              <div class="doc-info-row">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                <span x-text="doc.clinic||'No clinic'"></span>
+              </div>
+              <div class="doc-info-row">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                <span x-text="doc.email||'No email'"></span>
+              </div>
+              <div class="doc-info-row" x-show="doc.nextAppt">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                <span style="color:var(--blue);font-weight:600" x-text="'Next: '+doc.nextAppt"></span>
+              </div>
+            </div>
+          </div>
+        </template>
+        <button @click="showDoctorModal=true" class="add-doc-card">
+          <div style="font-size:32px">👨‍⚕️</div>
+          <span style="font-size:13px;font-weight:600;color:var(--ink-soft)">Add Doctor</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ══════════ SIDE EFFECTS ══════════ -->
+    <div x-show="tab==='sideeffects'" x-cloak class="page">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:20px">
+        <button @click="showSEModal=true" class="btn-primary" style="width:auto;padding:10px 20px">+ Log Side Effect</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 320px;gap:20px">
+        <div class="card">
+          <div class="card-head"><div class="card-title">Reported Side Effects</div><span class="card-sub" x-text="sideEffects.length+' entries'"></span></div>
+          <div class="card-body">
+            <div class="se-list">
+              <template x-for="(se,i) in sideEffects" :key="i">
+                <div class="se-item">
+                  <div class="se-sev" :class="se.severity"></div>
+                  <div style="flex:1">
+                    <div class="se-med" x-text="se.medication"></div>
+                    <div class="se-note" x-text="se.note"></div>
+                    <div class="se-date" x-text="se.date+' · Severity: '+se.severity"></div>
+                  </div>
+                  <button @click="sideEffects.splice(i,1);debouncedSave()" style="color:var(--ink-faint);background:none;border:none;cursor:pointer;font-size:18px;line-height:1">×</button>
+                </div>
+              </template>
+              <div x-show="sideEffects.length===0" class="empty-state"><div class="es-icon">💬</div><p>No side effects logged</p></div>
+            </div>
+          </div>
+        </div>
+        <!-- Severity Summary -->
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div class="card">
+            <div class="card-head"><div class="card-title">Severity Breakdown</div></div>
+            <div class="card-body">
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;align-items:center;justify-content:space-between">
+                  <span style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="width:10px;height:10px;border-radius:50%;background:var(--amber);display:inline-block"></span>Mild</span>
+                  <span class="badge badge-amber" x-text="sideEffects.filter(s=>s.severity==='mild').length"></span>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between">
+                  <span style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="width:10px;height:10px;border-radius:50%;background:var(--rose);display:inline-block"></span>Moderate</span>
+                  <span class="badge badge-rose" x-text="sideEffects.filter(s=>s.severity==='moderate').length"></span>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between">
+                  <span style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="width:10px;height:10px;border-radius:50%;background:#7C0000;display:inline-block"></span>Severe</span>
+                  <span class="badge" style="background:#fde8e8;color:#7C0000" x-text="sideEffects.filter(s=>s.severity==='severe').length"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><div class="card-title">Tip</div></div>
+            <div class="card-body">
+              <p style="font-size:13px;color:var(--ink-soft);line-height:1.6">Always share your side effect log with your doctor during your next appointment. Tracking patterns helps optimize your treatment plan.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ ANALYTICS ══════════ -->
+    <div x-show="tab==='analytics'" x-cloak class="page">
+      <div class="analytics-grid">
+        <div class="analytic-card">
+          <div class="ac-icon">📈</div>
+          <div class="ac-val" x-text="adherence+'%'"></div>
+          <div class="ac-label">Today's Adherence</div>
+        </div>
+        <div class="analytic-card">
+          <div class="ac-icon">🔥</div>
+          <div class="ac-val" x-text="streakDays"></div>
+          <div class="ac-label">Current Streak (days)</div>
+        </div>
+        <div class="analytic-card">
+          <div class="ac-icon">💊</div>
+          <div class="ac-val" x-text="pills.length"></div>
+          <div class="ac-label">Active Medications</div>
+        </div>
+        <div class="analytic-card">
+          <div class="ac-icon">⚠️</div>
+          <div class="ac-val" x-text="pills.filter(p=>p.count<=7).length"></div>
+          <div class="ac-label">Low Stock Alerts</div>
+        </div>
+        <div class="analytic-card">
+          <div class="ac-icon">👨‍⚕️</div>
+          <div class="ac-val" x-text="doctors.length"></div>
+          <div class="ac-label">Doctors Registered</div>
+        </div>
+        <div class="analytic-card">
+          <div class="ac-icon">📝</div>
+          <div class="ac-val" x-text="sideEffects.length"></div>
+          <div class="ac-label">Side Effects Logged</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <div class="card">
+          <div class="card-head"><div class="card-title">Adherence Trend</div><span class="card-sub">Last 7 days</span></div>
+          <div class="card-body"><canvas id="analyticsChart" style="max-height:200px"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div class="card-title">Per-Medication Adherence</div></div>
+          <div class="card-body">
+            <template x-for="p in pills" :key="p.slot">
+              <div style="margin-bottom:14px">
+                <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px">
+                  <span style="font-weight:600" x-text="p.name"></span>
+                  <span style="color:var(--ink-soft)" x-text="(p.status==='taken'?100:0)+'%'"></span>
+                </div>
+                <div style="height:6px;background:var(--border);border-radius:4px;overflow:hidden">
+                  <div style="height:100%;border-radius:4px;background:var(--green);transition:.5s" :style="'width:'+(p.status==='taken'?100:0)+'%'"></div>
+                </div>
+              </div>
+            </template>
+            <div x-show="pills.length===0" class="empty-state" style="padding:24px 0"><p>No data yet</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ FAMILY & CAREGIVERS ══════════ -->
+    <div x-show="tab==='family'" x-cloak class="page">
+
+      <!-- Multi-Patient Switcher -->
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-head">
+          <div class="card-title">My Patients</div>
+          <span class="card-sub">Manage profiles you care for</span>
+        </div>
+        <div class="card-body">
+          <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px">
+            <template x-for="pat in patients" :key="pat.id">
+              <div @click="activePatientId=pat.id" style="cursor:pointer;padding:14px 20px;border-radius:12px;border:2px solid;transition:.15s"
+                :style="activePatientId===pat.id?'border-color:var(--blue);background:var(--blue-bg)':'border-color:var(--border);background:var(--white)'">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:#fff"
+                    :style="activePatientId===pat.id?'background:var(--blue)':'background:var(--ink-soft)'"
+                    x-text="(pat.name||'?')[0].toUpperCase()"></div>
+                  <div>
+                    <div style="font-weight:600;font-size:14px" x-text="pat.name"></div>
+                    <div style="font-size:11px;color:var(--ink-soft)" x-text="pat.relation"></div>
+                  </div>
+                  <span x-show="activePatientId===pat.id" class="badge badge-blue" style="margin-left:8px">Active</span>
+                </div>
+              </div>
+            </template>
+            <!-- Add patient button -->
+            <button @click="showAddPatient=true" style="padding:14px 20px;border-radius:12px;border:2px dashed var(--border);background:none;cursor:pointer;color:var(--ink-soft);font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;transition:.15s" onmouseover="this.style.borderColor='var(--blue)';this.style.color='var(--blue)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--ink-soft)'">
+              <span style="font-size:20px">+</span> Add Patient
+            </button>
+          </div>
+          <div style="padding:12px 16px;background:var(--blue-bg);border-radius:10px;font-size:13px;color:var(--blue)">
+            💡 <strong>Active patient:</strong> <span x-text="patients.find(p=>p.id===activePatientId)?.name||'—'"></span> — medication data on all tabs reflects this profile.
+          </div>
+        </div>
+      </div>
+
+      <!-- Caregivers -->
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-head">
+          <div class="card-title">Caregivers</div>
+          <button @click="showAddCaregiver=true" style="padding:8px 16px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">+ Add Caregiver</button>
+        </div>
+        <div class="card-body">
+          <template x-for="(cg,i) in caregivers" :key="i">
+            <div style="display:flex;align-items:center;gap:14px;padding:14px;border:1.5px solid var(--border);border-radius:12px;margin-bottom:10px;background:var(--white)">
+              <div style="width:42px;height:42px;border-radius:12px;background:var(--purple-bg);display:flex;align-items:center;justify-content:center;font-size:18px">👤</div>
+              <div style="flex:1">
+                <div style="font-weight:700;font-size:14px" x-text="cg.name"></div>
+                <div style="font-size:12px;color:var(--ink-soft)" x-text="cg.relation+' · '+cg.phone"></div>
+                <div style="display:flex;gap:8px;margin-top:6px">
+                  <span class="badge" :class="cg.access==='full'?'badge-green':'badge-blue'" x-text="cg.access==='full'?'Full Access':'View Only'"></span>
+                  <span x-show="cg.alerts" class="badge badge-amber">Alerts ON</span>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+                <a :href="'tel:'+cg.phone" style="padding:6px 12px;background:var(--green-bg);color:var(--green);border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;text-decoration:none">📞 Call</a>
+                <a :href="'https://wa.me/'+cg.phone.replace(/[^0-9]/g,'')" target="_blank" style="padding:6px 12px;background:#dcfce7;color:#16a34a;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;text-decoration:none">💬 WhatsApp</a>
+                <button @click="caregivers.splice(i,1);debouncedSave()" style="padding:6px 12px;background:var(--rose-bg);color:var(--rose);border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer">Remove</button>
+              </div>
+            </div>
+          </template>
+          <div x-show="caregivers.length===0" style="text-align:center;padding:32px;color:var(--ink-soft)">
+            <div style="font-size:36px;margin-bottom:10px">👥</div>
+            <div style="font-weight:600">No caregivers added</div>
+            <div style="font-size:13px;margin-top:4px">Add a family member or nurse to receive alerts</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Missed Dose Alert Simulation -->
+      <div class="card">
+        <div class="card-head"><div class="card-title">Alert Simulation</div><span class="card-sub">Test caregiver notifications</span></div>
+        <div class="card-body">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:14px;background:var(--amber-bg);border:1.5px solid var(--amber-border);border-radius:12px;margin-bottom:12px">
+            <div>
+              <div style="font-weight:600;font-size:14px;color:var(--amber)">📱 WhatsApp Alert on Missed Dose</div>
+              <div style="font-size:12px;color:var(--ink-soft);margin-top:3px">Sends "Aditya missed their 08:00 AM dose of Lisinopril" to all caregivers with alerts ON</div>
+            </div>
+            <button @click="simulateCaregiverAlert()" style="padding:9px 18px;background:var(--amber);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">Simulate</button>
+          </div>
+          <div style="font-size:12px;color:var(--ink-faint);padding:8px 12px;background:var(--cream);border-radius:8px">
+            ⚙️ To enable real WhatsApp alerts, add your Twilio credentials in Settings → Integrations. Currently opens WhatsApp Web with a pre-filled message.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Patient Modal -->
+    <div x-show="showAddPatient" x-cloak class="modal-bg">
+      <div class="modal-card" style="max-width:440px">
+        <div class="modal-eye">👤 Add Patient</div>
+        <div class="modal-title" style="font-size:20px;margin-bottom:20px">New Patient Profile</div>
+        <div class="fl"><label>Full Name</label><input type="text" x-model="newPatient.name" placeholder="e.g. Meena Sharma" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none"></div>
+        <div class="fl"><label>Relation</label><input type="text" x-model="newPatient.relation" placeholder="e.g. Mother, Father, Child" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none"></div>
+        <div class="fl"><label>Date of Birth</label><input type="date" x-model="newPatient.dob" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none"></div>
+        <div style="display:flex;gap:10px;margin-top:8px">
+          <button @click="showAddPatient=false" style="flex:1;padding:12px;border:1.5px solid var(--border);background:none;border-radius:9px;cursor:pointer;font-size:14px;font-weight:600">Cancel</button>
+          <button @click="savePatient()" style="flex:2;padding:12px;background:var(--blue);color:#fff;border:none;border-radius:9px;cursor:pointer;font-size:14px;font-weight:700">Add Patient</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Caregiver Modal -->
+    <div x-show="showAddCaregiver" x-cloak class="modal-bg">
+      <div class="modal-card" style="max-width:440px">
+        <div class="modal-eye">👥 Add Caregiver</div>
+        <div class="modal-title" style="font-size:20px;margin-bottom:20px">New Caregiver</div>
+        <div class="fl"><label>Full Name</label><input type="text" x-model="newCaregiver.name" placeholder="e.g. Priya Kumar" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none"></div>
+        <div class="fl"><label>Relation</label><input type="text" x-model="newCaregiver.relation" placeholder="e.g. Daughter, Nurse" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none"></div>
+        <div class="fl"><label>Phone (with country code)</label><input type="text" x-model="newCaregiver.phone" placeholder="+91 98765 43210" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none"></div>
+        <div class="fl"><label>Email (optional)</label><input type="email" x-model="newCaregiver.email" placeholder="email@example.com" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none"></div>
+        <div class="fl"><label>Access Level</label>
+          <select x-model="newCaregiver.access" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;background:var(--cream)">
+            <option value="view">View Only — can see schedule & history</option>
+            <option value="full">Full Access — can mark doses & edit</option>
+          </select>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--amber-bg);border-radius:9px;margin-bottom:14px">
+          <div style="font-size:13px;font-weight:600;color:var(--amber)">📱 Send WhatsApp alerts on missed doses</div>
+          <label class="toggle-wrap"><input type="checkbox" x-model="newCaregiver.alerts"><div class="toggle-slider"></div></label>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button @click="showAddCaregiver=false" style="flex:1;padding:12px;border:1.5px solid var(--border);background:none;border-radius:9px;cursor:pointer;font-size:14px;font-weight:600">Cancel</button>
+          <button @click="saveCaregiver()" style="flex:2;padding:12px;background:var(--blue);color:#fff;border:none;border-radius:9px;cursor:pointer;font-size:14px;font-weight:700">Add Caregiver</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ PHARMACY & REFILLS ══════════ -->
+    <div x-show="tab==='pharmacy'" x-cloak class="page">
+
+      <!-- Refill Alerts -->
+      <template x-if="pills.filter(p=>p.count<=p.refillAt||7).length>0">
+        <div style="background:var(--amber-bg);border:1.5px solid var(--amber-border);border-radius:14px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:14px">
+          <div style="font-size:28px">🔔</div>
+          <div style="flex:1">
+            <div style="font-weight:700;color:var(--amber);font-size:15px">Refill Required Soon</div>
+            <div style="font-size:13px;color:var(--ink-soft);margin-top:2px">
+              <template x-for="p in pills.filter(p=>p.count<=(pharmacyNotes.find(n=>n.medication===p.name)?.refillAt||7))">
+                <span style="display:inline-block;margin-right:8px;font-weight:600" x-text="p.name+' ('+p.count+' left)'"></span>
+              </template>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- Pharmacy Cards -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div style="font-size:18px;font-weight:700;color:var(--ink)">Pharmacy & Prescription Notes</div>
+        <button @click="showAddPharmacy=true" style="padding:9px 18px;background:var(--blue);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer">+ Add Entry</button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <template x-for="(ph,i) in pharmacyNotes" :key="i">
+          <div style="background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:18px;position:relative">
+            <button @click="pharmacyNotes.splice(i,1);debouncedSave()" style="position:absolute;top:12px;right:12px;background:none;border:none;color:var(--ink-faint);cursor:pointer;font-size:16px">×</button>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+              <div style="width:38px;height:38px;background:var(--blue-bg);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px">💊</div>
+              <div>
+                <div style="font-weight:700;font-size:15px" x-text="ph.medication"></div>
+                <div style="font-size:11px;color:var(--ink-soft)">Refill when ≤ <span x-text="ph.refillAt||7"></span> pills left</div>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">
+              <div style="padding:8px 10px;background:var(--cream);border-radius:8px">
+                <div style="color:var(--ink-soft);font-weight:600;margin-bottom:2px">🏪 PHARMACY</div>
+                <div style="color:var(--ink);font-weight:500" x-text="ph.pharmacy||'—'"></div>
+              </div>
+              <div style="padding:8px 10px;background:var(--cream);border-radius:8px">
+                <div style="color:var(--ink-soft);font-weight:600;margin-bottom:2px">💰 COST</div>
+                <div style="color:var(--ink);font-weight:500" x-text="ph.cost||'—'"></div>
+              </div>
+              <div style="padding:8px 10px;background:var(--green-bg);border-radius:8px">
+                <div style="color:var(--green);font-weight:600;margin-bottom:2px">🔄 GENERIC ALT.</div>
+                <div style="color:var(--ink);font-weight:500" x-text="ph.generic||'—'"></div>
+              </div>
+              <div style="padding:8px 10px;background:var(--purple-bg);border-radius:8px">
+                <div style="color:var(--purple);font-weight:600;margin-bottom:2px">🛡 INSURANCE</div>
+                <div style="color:var(--ink);font-weight:500" x-text="ph.insurance||'—'"></div>
+              </div>
+            </div>
+            <template x-if="ph.notes">
+              <div style="margin-top:10px;padding:8px 10px;background:var(--amber-bg);border-radius:8px;font-size:12px;color:var(--amber)">
+                📝 <span x-text="ph.notes"></span>
+              </div>
+            </template>
+            <!-- Refill progress bar -->
+            <div style="margin-top:12px">
+              <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink-soft);margin-bottom:4px">
+                <span>Stock level</span>
+                <span x-text="(pills.find(p=>p.name===ph.medication)?.count||0)+' pills left'"></span>
+              </div>
+              <div style="height:6px;background:var(--border);border-radius:4px;overflow:hidden">
+                <div style="height:100%;border-radius:4px;transition:.5s"
+                  :style="'width:'+Math.min(((pills.find(p=>p.name===ph.medication)?.count||0)/30)*100,100)+'%;background:'+(( pills.find(p=>p.name===ph.medication)?.count||0)<=7?'var(--rose)':'var(--green)')"></div>
+              </div>
+            </div>
+          </div>
+        </template>
+        <div x-show="pharmacyNotes.length===0" style="grid-column:1/-1;text-align:center;padding:48px;color:var(--ink-soft)">
+          <div style="font-size:40px;margin-bottom:12px">🏪</div>
+          <div style="font-weight:600">No pharmacy notes yet</div>
+          <div style="font-size:13px;margin-top:4px">Add pharmacy details for each medication for quick refill info</div>
+        </div>
+      </div>
+
+      <!-- Prescription Tracker -->
+      <div class="card" style="margin-top:20px">
+        <div class="card-head"><div class="card-title">Prescription Tracker</div><span class="card-sub">Insurance & coverage summary</span></div>
+        <div class="card-body">
+          <table style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead>
+              <tr style="border-bottom:2px solid var(--border)">
+                <th style="text-align:left;padding:8px 12px;color:var(--ink-soft);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.06em">Medicine</th>
+                <th style="text-align:left;padding:8px 12px;color:var(--ink-soft);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.06em">Cost</th>
+                <th style="text-align:left;padding:8px 12px;color:var(--ink-soft);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.06em">Generic</th>
+                <th style="text-align:left;padding:8px 12px;color:var(--ink-soft);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.06em">Insurance</th>
+                <th style="text-align:center;padding:8px 12px;color:var(--ink-soft);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.06em">Refill At</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="ph in pharmacyNotes" :key="ph.medication">
+                <tr style="border-bottom:1px solid var(--border)">
+                  <td style="padding:10px 12px;font-weight:600" x-text="ph.medication"></td>
+                  <td style="padding:10px 12px;color:var(--ink-soft)" x-text="ph.cost||'—'"></td>
+                  <td style="padding:10px 12px;color:var(--green)" x-text="ph.generic||'—'"></td>
+                  <td style="padding:10px 12px">
+                    <span class="badge" :class="ph.insurance&&ph.insurance!=='Not covered'?'badge-green':'badge-rose'" x-text="ph.insurance||'—'"></span>
+                  </td>
+                  <td style="padding:10px 12px;text-align:center">
+                    <span class="badge badge-amber" x-text="'≤ '+(ph.refillAt||7)+' pills'"></span>
+                  </td>
+                </tr>
+              </template>
+              <tr x-show="pharmacyNotes.length===0"><td colspan="5" style="padding:24px;text-align:center;color:var(--ink-faint)">No records</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Pharmacy Modal -->
+    <div x-show="showAddPharmacy" x-cloak class="modal-bg">
+      <div class="modal-card" style="max-width:500px">
+        <div class="modal-eye">🏪 Pharmacy Info</div>
+        <div class="modal-title" style="font-size:20px;margin-bottom:20px">Add Pharmacy Note</div>
+        <div class="fl"><label>Medication Name</label>
+          <select x-model="newPharmacy.medication" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;background:var(--cream)">
+            <option value="">— Select Medicine —</option>
+            <template x-for="p in pills"><option :value="p.name" x-text="p.name"></option></template>
+          </select>
+        </div>
+        <div class="fl"><label>Pharmacy Name &amp; Location</label><input type="text" x-model="newPharmacy.pharmacy" placeholder="e.g. Apollo Pharmacy, MG Road" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="fl"><label>Cost per Strip</label><input type="text" x-model="newPharmacy.cost" placeholder="e.g. ₹120/strip" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none"></div>
+          <div class="fl"><label>Refill When ≤ (pills)</label><input type="number" min="1" max="30" x-model.number="newPharmacy.refillAt" placeholder="7" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none"></div>
+        </div>
+        <div class="fl"><label>Generic Alternative</label><input type="text" x-model="newPharmacy.generic" placeholder="e.g. Lisinopril 10mg (Cipla)" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none"></div>
+        <div class="fl"><label>Insurance Coverage</label><input type="text" x-model="newPharmacy.insurance" placeholder="e.g. HDFC ERGO - covered" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none"></div>
+        <div class="fl"><label>Notes</label><textarea x-model="newPharmacy.notes" placeholder="e.g. Buy in bulk — cheaper at MedPlus" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;resize:none;height:70px"></textarea></div>
+        <div style="display:flex;gap:10px;margin-top:4px">
+          <button @click="showAddPharmacy=false;newPharmacy={medication:'',pharmacy:'',cost:'',generic:'',insurance:'',refillAt:7,notes:''}" style="flex:1;padding:12px;border:1.5px solid var(--border);background:none;border-radius:9px;cursor:pointer;font-size:14px;font-weight:600">Cancel</button>
+          <button @click="savePharmacy()" style="flex:2;padding:12px;background:var(--blue);color:#fff;border:none;border-radius:9px;cursor:pointer;font-size:14px;font-weight:700">Save Entry</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ SETTINGS ══════════ -->
+    <div x-show="tab==='settings'" x-cloak class="page">
+      <div class="settings-max">
+        <div class="sett-card">
+          <h3>Patient Profile</h3>
+          <div class="sett-fields">
+            <div class="fl"><label>Patient Name</label><input type="text" x-model="user.patient" @change="debouncedSave()"></div>
+            <div class="fl"><label>Date of Birth</label><input type="date" x-model="user.dob" @change="debouncedSave()"></div>
+            <div class="fl"><label>Blood Type</label>
+              <select x-model="user.bloodType" @change="debouncedSave()" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);outline:none">
+                <option value="">— Select —</option>
+                <template x-for="bt in ['A+','A-','B+','B-','O+','O-','AB+','AB-']"><option :value="bt" x-text="bt"></option></template>
+              </select>
+            </div>
+            <div class="fl"><label>Weight (kg)</label><input type="number" x-model="user.weight" @change="debouncedSave()"></div>
+            <div class="fl"><label>Allergies</label><input type="text" x-model="user.allergies" placeholder="e.g. Penicillin, Aspirin" @change="debouncedSave()"></div>
+            <div class="fl"><label>Primary Language</label>
+              <select x-model="user.language" @change="debouncedSave()" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);outline:none">
+                <option>English</option><option>Tamil</option><option>Hindi</option><option>Telugu</option><option>Kannada</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="sett-card">
+          <h3>Caregiver &amp; Emergency</h3>
+          <div class="sett-fields">
+            <div class="fl"><label>Caregiver Name</label><input type="text" x-model="user.caregiver" @change="debouncedSave()"></div>
+            <div class="fl"><label>Caregiver Phone</label><input type="text" x-model="user.caregiverPhone" @change="debouncedSave()"></div>
+            <div class="fl"><label style="color:var(--rose)">Emergency (Ambulance)</label><input type="text" x-model="user.ambulance" style="background:var(--rose-bg);border-color:var(--rose-border)" @change="debouncedSave()"></div>
+            <div class="fl"><label>Hospital Name</label><input type="text" x-model="user.hospital" placeholder="Nearest hospital" @change="debouncedSave()"></div>
+          </div>
+        </div>
+
+        <div class="sett-card">
+          <h3>Notification Preferences</h3>
+          <div class="sett-toggle-row">
+            <div>
+              <div style="font-size:14px;font-weight:600">Dose Reminders</div>
+              <div style="font-size:12px;color:var(--ink-soft)">Push notifications when it's time to take a dose</div>
+            </div>
+            <label class="toggle-wrap"><input type="checkbox" x-model="settings.doseReminders"><div class="toggle-slider"></div></label>
+          </div>
+          <div class="sett-toggle-row">
+            <div>
+              <div style="font-size:14px;font-weight:600">Missed Dose Alerts</div>
+              <div style="font-size:12px;color:var(--ink-soft)">Alert when a dose is overdue by 30 minutes</div>
+            </div>
+            <label class="toggle-wrap"><input type="checkbox" x-model="settings.missedAlerts"><div class="toggle-slider"></div></label>
+          </div>
+          <div class="sett-toggle-row">
+            <div>
+              <div style="font-size:14px;font-weight:600">Low Stock Warnings</div>
+              <div style="font-size:12px;color:var(--ink-soft)">Notify when a medication drops below 7 pills</div>
+            </div>
+            <label class="toggle-wrap"><input type="checkbox" x-model="settings.lowStockAlerts"><div class="toggle-slider"></div></label>
+          </div>
+          <div class="sett-toggle-row">
+            <div>
+              <div style="font-size:14px;font-weight:600">Caregiver Alerts</div>
+              <div style="font-size:12px;color:var(--ink-soft)">Notify caregiver on critical missed doses</div>
+            </div>
+            <label class="toggle-wrap"><input type="checkbox" x-model="settings.caregiverAlerts"><div class="toggle-slider"></div></label>
+          </div>
+          <div class="sett-toggle-row">
+            <div>
+              <div style="font-size:14px;font-weight:600">Drug Interaction Checker</div>
+              <div style="font-size:12px;color:var(--ink-soft)">Warn about known interactions between your medications</div>
+            </div>
+            <label class="toggle-wrap"><input type="checkbox" x-model="settings.interactionChecker"><div class="toggle-slider"></div></label>
+          </div>
+        </div>
+
+        <div class="sett-card" style="background:var(--green-bg);border-color:var(--green-border)">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:38px;height:38px;border-radius:10px;background:var(--green);display:flex;align-items:center;justify-content:center">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div>
+              <div style="font-size:14px;font-weight:700;color:var(--green)">Auto-Save Active</div>
+              <div style="font-size:12px;color:var(--green);opacity:.75">All changes sync to Firebase Firestore in real-time</div>
+            </div>
+            <button @click="autoSave()" style="margin-left:auto;padding:8px 16px;background:var(--green);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">Sync Now</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ══════════ DOSE REMINDER MODAL ══════════ -->
+<div x-show="reminderVisible" x-cloak class="modal-bg">
+  <div class="modal-card">
+    <div class="modal-eye">⏰ Dose Reminder</div>
+    <div class="modal-title">Time to take<br><span style="color:var(--blue)" x-text="reminderPill?.name||''"></span></div>
+    <div style="font-size:13px;color:var(--ink-soft);margin-bottom:18px">
+      <strong x-text="reminderPill?.slot||''"></strong> · Scheduled at <strong x-text="reminderPill?formatTime12(reminderPill.time):''"></strong>
+      <span x-show="reminderPill?.dosage"> · Dosage: <strong x-text="reminderPill?.dosage||''"></strong></span>
+    </div>
+    <div class="modal-info" x-show="reminderPill?.notes" x-text="reminderPill?.notes||''"></div>
+    <div class="modal-actions">
+      <button @click="snoozeReminder()" class="m-btn-s">Snooze 10 min</button>
+      <button @click="confirmReminderTaken()" class="m-btn-p">✓ Mark as Taken</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ ADD DOCTOR MODAL ══════════ -->
+<div x-show="showDoctorModal" x-cloak class="modal-bg" @click.self="showDoctorModal=false">
+  <div class="modal-card form-modal">
+    <div class="modal-eye">👨‍⚕️ Add Doctor</div>
+    <div class="modal-title" style="font-size:22px;margin-bottom:20px">Register a Doctor</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px">
+      <div class="fl"><label>Full Name</label><input type="text" x-model="newDoctor.name" placeholder="e.g. Rajan Sharma"></div>
+      <div class="fl"><label>Specialty</label><input type="text" x-model="newDoctor.specialty" placeholder="e.g. Cardiologist"></div>
+      <div class="fl"><label>Phone</label><input type="text" x-model="newDoctor.phone" placeholder="+91 98765 43210"></div>
+      <div class="fl"><label>Email</label><input type="email" x-model="newDoctor.email" placeholder="doctor@hospital.com"></div>
+      <div class="fl"><label>Clinic / Hospital</label><input type="text" x-model="newDoctor.clinic" placeholder="Apollo Hospital"></div>
+      <div class="fl"><label>Next Appointment</label><input type="date" x-model="newDoctor.nextAppt"></div>
+    </div>
+    <div class="modal-actions">
+      <button @click="showDoctorModal=false" class="m-btn-s">Cancel</button>
+      <button @click="saveDoctor()" class="m-btn-p">Add Doctor</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ SIDE EFFECT MODAL ══════════ -->
+<div x-show="showSEModal" x-cloak class="modal-bg" @click.self="showSEModal=false">
+  <div class="modal-card form-modal">
+    <div class="modal-eye">⚠️ Log Side Effect</div>
+    <div class="modal-title" style="font-size:22px;margin-bottom:20px">Record a Side Effect</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px">
+      <div class="fl"><label>Medication</label>
+        <select x-model="newSE.medication" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);outline:none">
+          <option value="">— Select —</option>
+          <template x-for="p in pills"><option :value="p.name" x-text="p.name"></option></template>
+        </select>
+      </div>
+      <div class="fl"><label>Severity</label>
+        <select x-model="newSE.severity" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);outline:none">
+          <option value="mild">Mild</option><option value="moderate">Moderate</option><option value="severe">Severe</option>
+        </select>
+      </div>
+      <div class="fl" style="grid-column:span 2"><label>Description</label>
+        <textarea x-model="newSE.note" placeholder="Describe the side effect…" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);outline:none;resize:none;height:80px"></textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button @click="showSEModal=false" class="m-btn-s">Cancel</button>
+      <button @click="saveSideEffect()" class="m-btn-p">Save Entry</button>
+    </div>
+  </div>
+</div>
+
+<!-- SOS Confirmation -->
+<div x-show="showSOS" x-cloak class="modal-bg">
+  <div class="modal-card" style="text-align:center;max-width:380px">
+    <div style="font-size:56px;margin-bottom:16px">🚨</div>
+    <div class="modal-title" style="font-size:24px">Emergency SOS</div>
+    <div style="font-size:14px;color:var(--ink-soft);margin-bottom:20px">
+      Calling <strong x-text="user.ambulance||'102'"></strong> and alerting caregiver <strong x-text="user.caregiver||'caregiver'"></strong> at <strong x-text="user.caregiverPhone||'—'"></strong>
+    </div>
+    <div style="background:var(--rose-bg);border:1.5px solid var(--rose-border);border-radius:12px;padding:14px;margin-bottom:22px;font-size:13px;color:var(--rose)">
+      Patient: <strong x-text="user.patient"></strong> · Blood: <strong x-text="user.bloodType||'Unknown'"></strong> · Allergies: <strong x-text="user.allergies||'None'"></strong>
+    </div>
+    <div class="modal-actions">
+      <button @click="showSOS=false" class="m-btn-s">Cancel</button>
+      <button @click="confirmSOS()" style="flex:1;padding:13px;background:var(--rose);color:#fff;border:none;border-radius:11px;font-size:14px;font-weight:700;cursor:pointer">🚨 Confirm Emergency</button>
+    </div>
+  </div>
+</div>
+
+<audio id="reminderSound" src="https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg" preload="auto"></audio>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<script>
+firebase.initializeApp({apiKey:"AIzaSyCW0c9b67sK42sa3UH7kFdJSEd1Ra7x5k8",authDomain:"smartpillbox-69f36.firebaseapp.com",projectId:"smartpillbox-69f36"});
+const auth=firebase.auth(),db=firebase.firestore();
+</script>
+
+<script>
+// Known drug interactions (simplified)
+const INTERACTIONS={
+  'lisinopril':['atorvastatin','ibuprofen','potassium'],
+  'atorvastatin':['lisinopril','clarithromycin','amiodarone'],
+  'metformin':['alcohol','iodine contrast'],
+  'warfarin':['aspirin','ibuprofen','vitamin k'],
+};
+
+function app(){return{
+  // ── State ──
+  loggedIn:false,email:'',password:'',
+  tab:'dash',showNotifs:false,
+  saveStatus:'idle',_saveTimer:null,_syncBlocked:false,_lastSaveTime:0,_unblockTimer:null,
+  reminderVisible:false,reminderPill:null,lastReminderKey:null,_snoozeTimer:null,
+  showDoctorModal:false,showSEModal:false,showSOS:false,
+  searchQuery:'',
+  adherence:0,weeklyChart:null,analyticsChartObj:null,nextDoseLabel:'—',
+  streakDays:3,
+
+  // ── Smart Pillbox Hardware State ──
+  hw:{
+    online:false,
+    lastSeenLabel:'Never',
+    lastSeenMs:0,
+    activeSlot:1,
+    state:'IDLE',          // IDLE | WAITING_FOR_USER | VERIFYING
+    weights:[0,0,0],       // live grams from HX711 sensors (Slot1, Slot2, Slot3)
+    slotStatus:['','',''], // '' | 'active' | 'taken' | 'wrong' | 'toomany' | 'nopill'
+    log:[],                // [{time,event,slot,type}]
+    _unsub:null,
+    _logUnsub:null,
+    _tickTimer:null
+  },
+  quote:'',
+  quotes:["Your health is your greatest wealth.","Consistency in medication leads to better recovery.","Small daily habits create lifelong health.","Every pill taken is a step toward healing.","Discipline today, wellness tomorrow.","Taking medicine on time shows self-care.","Health today, strength tomorrow."],
+
+  user:{patient:'Aditya',caregiver:'Rajesh Kumar',caregiverPhone:'+91 98765 43210',ambulance:'102',hospital:'',dob:'',bloodType:'',allergies:'',language:'English',weight:''},
+
+  menu:[
+    {id:'dash',name:'Dashboard'},
+    {id:'pills',name:'My Pills'},
+    {id:'schedule',name:'Weekly Schedule'},
+    {id:'doctors',name:'Doctors'},
+    {id:'sideeffects',name:'Side Effects'},
+    {id:'analytics',name:'Analytics'},
+    {id:'family',name:'Family & Caregivers'},
+    {id:'pharmacy',name:'Pharmacy & Refills'},
+    {id:'settings',name:'Settings'}
+  ],
+
+  pills:[
+    {name:'Lisinopril',time:'08:00',slot:'Slot 1',status:'upcoming',count:24,frequency:'Daily',days:[],dosage:'10mg',doctor:'',notes:'Take with water in the morning'},
+    {name:'Atorvastatin',time:'20:00',slot:'Slot 2',status:'upcoming',count:4,frequency:'Daily',days:[],dosage:'20mg',doctor:'',notes:'Take at night with or without food'}
+  ],
+
+  doctors:[
+    {name:'Priya Nair',specialty:'Cardiologist',phone:'+91 98765 00001',email:'priya@apollo.com',clinic:'Apollo Hospital',nextAppt:'2026-04-10',emoji:'👩‍⚕️'},
+    {name:'Suresh Mehta',specialty:'General Physician',phone:'+91 98765 00002',email:'suresh@care.com',clinic:'Care Clinic',nextAppt:'2026-03-25',emoji:'👨‍⚕️'}
+  ],
+
+  newDoctor:{name:'',specialty:'',phone:'',email:'',clinic:'',nextAppt:''},
+
+  sideEffects:[
+    {medication:'Lisinopril',note:'Mild dry cough in the morning',severity:'mild',date:'2026-03-06'},
+    {medication:'Atorvastatin',note:'Mild muscle soreness in legs',severity:'mild',date:'2026-03-07'}
+  ],
+  newSE:{medication:'',note:'',severity:'mild'},
+
+  notifications:[],
+  doseLog:[],
+  drugInteractions:[],
+
+  settings:{doseReminders:true,missedAlerts:true,lowStockAlerts:true,caregiverAlerts:false,interactionChecker:true},
+
+  // ── Family / Multi-patient ──
+  patients:[
+    {id:'self',name:'Aditya',relation:'Self',dob:'',bloodType:'',active:true}
+  ],
+  activePatientId:'self',
+  newPatient:{name:'',relation:'',dob:'',bloodType:''},
+  showAddPatient:false,
+
+  caregivers:[
+    {name:'Rajesh Kumar',relation:'Father',phone:'+91 98765 43210',email:'',access:'view',alerts:true}
+  ],
+  newCaregiver:{name:'',relation:'',phone:'',email:'',access:'view',alerts:true},
+  showAddCaregiver:false,
+
+  // ── Pharmacy & Refills ──
+  pharmacyNotes:[
+    {medication:'Lisinopril',pharmacy:'Apollo Pharmacy, Chennai',cost:'₹120/strip',generic:'Lisinopril 10mg (Cipla)',insurance:'HDFC ERGO - covered',refillAt:7,notes:''},
+    {medication:'Atorvastatin',pharmacy:'MedPlus, Anna Nagar',cost:'₹85/strip',generic:'Atorva 20mg (Torrent)',insurance:'Not covered',refillAt:10,notes:'Buy in bulk - cheaper'}
+  ],
+  newPharmacy:{medication:'',pharmacy:'',cost:'',generic:'',insurance:'',refillAt:7,notes:''},
+  showAddPharmacy:false,
+
+  // ── Computed ──
+  timeOfDay(){const h=new Date().getHours();return h<12?'morning':h<17?'afternoon':'evening'},
+
+  filteredPills(){
+    if(!this.searchQuery)return this.pills;
+    const q=this.searchQuery.toLowerCase();
+    return this.pills.filter(p=>p.name.toLowerCase().includes(q)||p.slot.toLowerCase().includes(q));
+  },
+
+  calendarDays(){
+    const days=[];const today=new Date();
+    for(let i=29;i>=0;i--){
+      const d=new Date(today);d.setDate(d.getDate()-i);
+      const num=d.getDate();
+      const isFuture=false;
+      // Simulate data — in production pull from Firestore history
+      const rand=Math.random();
+      let cls='empty',pct=0;
+      if(i>0){
+        if(rand>0.7){cls='taken';pct=100;}
+        else if(rand>0.4){cls='partial';pct=Math.round(50+rand*40);}
+        else{cls='missed';pct=0;}
+      } else {
+        pct=this.adherence;
+        cls=pct===100?'taken':pct>0?'partial':'empty';
+      }
+      days.push({date:d.toISOString().split('T')[0],num,cls,pct});
+    }
+    return days;
+  },
+
+  monthlyStats(){
+    const days=this.calendarDays();
+    const taken=days.filter(d=>d.cls==='taken').length;
+    const missed=days.filter(d=>d.cls==='missed').length;
+    const total=days.filter(d=>d.cls!=='future').length;
+    return{taken,missed,rate:total?Math.round((taken/total)*100):0};
+  },
+
+  bestDays(){
+    const map={Mon:0,Tue:0,Wed:0,Thu:0,Fri:0,Sat:0,Sun:0};
+    const cnt={Mon:0,Tue:0,Wed:0,Thu:0,Fri:0,Sat:0,Sun:0};
+    const labels=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    this.calendarDays().forEach(d=>{
+      const dow=labels[new Date(d.date).getDay()];
+      map[dow]+=d.pct;cnt[dow]++;
+    });
+    return Object.keys(map).map(k=>({label:k,pct:cnt[k]?Math.round(map[k]/cnt[k]):0})).sort((a,b)=>b.pct-a.pct).slice(0,4);
+  },
+
+  // ── Auth ──
+  async googleLogin(){try{await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());this.loggedIn=true;}catch(e){alert(e.message);}},
+  async login(){try{await auth.signInWithEmailAndPassword(this.email,this.password);this.loggedIn=true;}catch(e){alert(e.message);}},
+  async logout(){await auth.signOut();this.loggedIn=false;},
+
+  // ── Init ──
+  init(){
+    if(Notification.permission!=='granted')Notification.requestPermission();
+    this.quote=this.quotes[Math.floor(Math.random()*this.quotes.length)];
+    auth.onAuthStateChanged(u=>{
+      if(u){
+        this.loggedIn=true;
+        this.startSync();
+        this.startDeviceSync();
+        setTimeout(()=>{this.initCharts();},200);
+        this.updateAdherence();
+        this.computeNextDose();
+        this.generateAlerts();
+        this.checkInteractions();
+        this.buildDoseLog();
+        setInterval(()=>{this.checkMissed();},60000);
+      }
+    });
+  },
+
+  // ── Sync ──
+  startSync(){
+    var u=auth.currentUser;if(!u)return;
+    var self=this;
+    var loaded=false; // once true, we NEVER overwrite local state from Firestore
+    db.collection('users').doc(u.uid).onSnapshot(function(doc){
+      if(loaded)return; // session owns the data after first load
+      loaded=true;
+      if(doc.exists){
+        var d=doc.data();
+        if(d.user)self.user=d.user;
+        if(d.pills&&Array.isArray(d.pills))self.pills=d.pills;
+        if(d.doctors&&Array.isArray(d.doctors))self.doctors=d.doctors;
+        if(d.sideEffects&&Array.isArray(d.sideEffects))self.sideEffects=d.sideEffects;
+        if(d.settings)self.settings=d.settings;
+        if(d.caregivers&&Array.isArray(d.caregivers))self.caregivers=d.caregivers;
+        if(d.patients&&Array.isArray(d.patients))self.patients=d.patients;
+        if(d.pharmacyNotes&&Array.isArray(d.pharmacyNotes))self.pharmacyNotes=d.pharmacyNotes;
+      }
+      // Reset any pills taken on a previous day back to upcoming
+      self.resetForNewDay();
+      self.generateAlerts();
+      self.updateAdherence();
+      self.computeNextDose();
+      self.buildDoseLog();
+      self.checkInteractions();
+    });
+  },
+
+  debouncedSave(){
+    // Block snapshot immediately so edits aren't overwritten during the debounce window
+    this._syncBlocked=true;
+    clearTimeout(this._unblockTimer);
+    clearTimeout(this._saveTimer);
+    var self=this;
+    this._saveTimer=setTimeout(function(){self.autoSave();},900);
+  },
+
+  autoSave(){
+    var self=this;
+    var u=auth.currentUser;
+    if(!u){self.saveStatus='error';return Promise.resolve();}
+    self.saveStatus='saving';
+    // Block snapshot echo for 5s so it won't race-overwrite what we're saving
+    self._syncBlocked=true;
+    clearTimeout(self._unblockTimer);
+    const payload={
+      user:JSON.parse(JSON.stringify(self.user)),
+      pills:JSON.parse(JSON.stringify(self.pills)),
+      doctors:JSON.parse(JSON.stringify(self.doctors)),
+      sideEffects:JSON.parse(JSON.stringify(self.sideEffects)),
+      settings:JSON.parse(JSON.stringify(self.settings)),
+      caregivers:JSON.parse(JSON.stringify(self.caregivers)),
+      patients:JSON.parse(JSON.stringify(self.patients)),
+      pharmacyNotes:JSON.parse(JSON.stringify(self.pharmacyNotes))
+    };
+    return db.collection('users').doc(u.uid).set(payload)
+      .then(function(){
+        self._lastSaveTime=Date.now();
+        self.saveStatus='saved';
+        self._unblockTimer=setTimeout(function(){self._syncBlocked=false;},5000);
+        setTimeout(function(){if(self.saveStatus==='saved')self.saveStatus='idle';},2200);
+      })
+      .catch(function(e){
+        console.error('AutoSave error:',e);
+        self.saveStatus='error';
+        self._syncBlocked=false;
+      });
+  },
+
+  // ── Pills Logic ──
+  // Returns correct status for a pill based on current time
+  // Reset yesterday's pills on new day load
+  resetForNewDay(){
+    var todayKey=this.getTodayKey();
+    var changed=false;
+    this.pills=this.pills.map(function(p){
+      // If taken on a previous day, reset to upcoming for today
+      if(p.status==='taken'&&p.takenDate&&p.takenDate!==todayKey){
+        changed=true;
+        return Object.assign({},p,{status:'upcoming',takenDate:null});
+      }
+      return p;
+    });
+    if(changed){
+      this.generateAlerts();
+      this.updateAdherence();
+      this.computeNextDose();
+      this.buildDoseLog();
+      this.autoSave();
+    }
+  },
+
+  addPill(){
+    // Block snapshot from overwriting while we add+save
+    this._syncBlocked=true;
+    clearTimeout(this._unblockTimer);
+    // Calculate next slot number safely
+    var max=0;
+    for(var i=0;i<this.pills.length;i++){
+      var n=parseInt((this.pills[i].slot||'').replace(/[^0-9]/g,''));
+      if(!isNaN(n)&&n>max)max=n;
+    }
+    var newPill={
+      name:'New Medicine',
+      time:'08:00',
+      slot:'Slot '+(max+1),
+      status:'upcoming',
+      count:30,
+      frequency:'Daily',
+      days:[],
+      dosage:'',
+      doctor:'',
+      notes:''
+    };
+    // Replace array (not just push) so Alpine detects the change and re-renders stat cards
+    this.pills=this.pills.concat([newPill]);
+    this.generateAlerts();
+    this.updateAdherence();
+    this.computeNextDose();
+    this.buildDoseLog();
+    this.autoSave();
+  },
+  removePill(i){
+    this._syncBlocked=true;
+    clearTimeout(this._unblockTimer);
+    // Replace array (not splice) to trigger Alpine reactivity
+    this.pills=this.pills.filter(function(_,idx){return idx!==i;});
+    this.generateAlerts();
+    this.updateAdherence();
+    this.computeNextDose();
+    this.buildDoseLog();
+    this.autoSave();
+  },
+  toggleDay(p,d){if(!p.days)p.days=[];p.days.includes(d)?p.days=p.days.filter(x=>x!==d):p.days.push(d);},
+  getStockPct(c){return Math.min((c/30)*100,100);},
+
+  markTaken(pill){
+    this._syncBlocked=true;
+    clearTimeout(this._unblockTimer);
+    var now=new Date();
+    var timeStr=now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+    var todayKey=this.getTodayKey();
+    // Match by slot name (stable identifier that survives array replacement)
+    var targetSlot=pill.slot;
+    this.pills=this.pills.map(function(p){
+      if(p.slot===targetSlot){
+        return Object.assign({},p,{status:'taken',count:Math.max(0,p.count-1),takenDate:todayKey});
+      }
+      return p;
+    });
+    this.doseLog.unshift({name:pill.name,slot:pill.slot,status:'taken',time:timeStr});
+    this.generateAlerts();this.updateAdherence();this.computeNextDose();this.syncHistory();
+    this.autoSave();
+  },
+
+  buildDoseLog(){
+    this.doseLog=this.pills.filter(p=>p.status!=='upcoming').map(p=>({
+      name:p.name,slot:p.slot,status:p.status,
+      time:this.formatTime12(p.time)
+    })).sort((a,b)=>a.time.localeCompare(b.time));
+  },
+
+  // ── Doctors ──
+  saveDoctor(){
+    if(!this.newDoctor.name)return;
+    this.doctors.push({...this.newDoctor,emoji:'👨‍⚕️'});
+    this.newDoctor={name:'',specialty:'',phone:'',email:'',clinic:'',nextAppt:''};
+    this.showDoctorModal=false;
+    this.debouncedSave();
+  },
+
+  // ── Side Effects ──
+  saveSideEffect(){
+    if(!this.newSE.medication||!this.newSE.note)return;
+    this.sideEffects.unshift({...this.newSE,date:new Date().toISOString().split('T')[0]});
+    if(this.newSE.severity==='severe')this.addNotif('Severe Side Effect','Reported for '+this.newSE.medication+'. Please contact your doctor.','missed');
+    this.newSE={medication:'',note:'',severity:'mild'};
+    this.showSEModal=false;
+    this.debouncedSave();
+  },
+
+  // ── Drug Interactions ──
+  checkInteractions(){
+    if(!this.settings.interactionChecker){this.drugInteractions=[];return;}
+    const names=this.pills.map(p=>p.name.toLowerCase());
+    const warnings=[];
+    names.forEach(name=>{
+      const key=Object.keys(INTERACTIONS).find(k=>name.includes(k));
+      if(key){
+        INTERACTIONS[key].forEach(interactant=>{
+          if(names.some(n=>n.includes(interactant))){
+            const w=`${name} + ${interactant} may interact. Consult your doctor.`;
+            if(!warnings.includes(w))warnings.push(w);
+          }
+        });
+      }
+    });
+    this.drugInteractions=warnings;
+  },
+
+  // ── Alerts ──
+  generateAlerts(){
+    this.notifications=[];
+    var now=new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+    var self=this;
+    this.pills.forEach(function(p){
+      if(p.status==='missed')self.notifications.push({title:'Dose Missed',msg:p.slot+' ('+p.name+') was not taken.',type:'missed',time:now});
+      // Use per-medicine refill threshold from pharmacyNotes if available
+      var note=self.pharmacyNotes.find(function(n){return n.medication===p.name;});
+      var threshold=note?note.refillAt:7;
+      if(p.count<=threshold&&self.settings.lowStockAlerts)self.notifications.push({title:'Refill Needed',msg:p.name+' — only '+p.count+' pills left.',type:'low',time:now});
+    });
+    if(self.drugInteractions.length>0)self.notifications.push({title:'Drug Interaction Warning',msg:'Potential interaction detected. Check dashboard.',type:'info',time:now});
+  },
+
+  addNotif(title,msg,type){this.notifications.unshift({title,msg,type,time:new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})});this.showNotifs=true;},
+
+  checkMissed(){
+    var now=new Date();var cur=now.getHours()*60+now.getMinutes();
+    var todayKey=this.getTodayKey();
+    var changed=false;
+    var self=this;
+    var newPills=this.pills.map(function(pill){
+      if(pill.status==='taken')return pill;
+      var parts=pill.time.split(':').map(Number);var pt=parts[0]*60+parts[1];
+      var rk=todayKey+'-'+pill.slot+'-'+pill.time;
+      if(!self.reminderVisible&&self.lastReminderKey!==rk&&Math.abs(cur-pt)<=1&&self.settings.doseReminders){
+        self.triggerReminder(pill,rk);
+      }
+      var newStatus=pill.status;
+      if(cur>pt+5&&pill.status!=='missed'){newStatus='missed';changed=true;}
+      return newStatus!==pill.status?Object.assign({},pill,{status:newStatus}):pill;
+    });
+    if(changed){
+      this.pills=newPills;
+      this.generateAlerts();
+      this.updateAdherence();
+      this.computeNextDose();
+      this.buildDoseLog();
+      // Silent background save — don't use autoSave() which resets _syncBlocked
+      var u=auth.currentUser;
+      if(u){
+        db.collection('users').doc(u.uid).set({
+          user:JSON.parse(JSON.stringify(self.user)),
+          pills:JSON.parse(JSON.stringify(self.pills)),
+          doctors:JSON.parse(JSON.stringify(self.doctors)),
+          sideEffects:JSON.parse(JSON.stringify(self.sideEffects)),
+          settings:JSON.parse(JSON.stringify(self.settings)),
+          caregivers:JSON.parse(JSON.stringify(self.caregivers)),
+          patients:JSON.parse(JSON.stringify(self.patients)),
+          pharmacyNotes:JSON.parse(JSON.stringify(self.pharmacyNotes))
+        }).catch(function(e){console.warn('checkMissed save failed:',e);});
+      }
+    }
+  },
+
+  triggerReminder(pill,key){
+    this.reminderPill=pill;this.reminderVisible=true;this.lastReminderKey=key;
+    const a=document.getElementById('reminderSound');if(a){a.currentTime=0;a.play().catch(()=>{});}
+  },
+  confirmReminderTaken(){
+    if(!this.reminderPill){this.reminderVisible=false;return;}
+    var p=this.reminderPill;this.reminderVisible=false;this.reminderPill=null;
+    clearTimeout(this._snoozeTimer);
+    this.markTaken(p);
+  },
+  snoozeReminder(){
+    this.reminderVisible=false;
+    const pill=this.reminderPill;
+    const self=this;
+    this.reminderPill=null;
+    this._snoozeTimer=setTimeout(function(){if(pill&&pill.status!=='taken')self.triggerReminder(pill,self.lastReminderKey+'_snooze');},10*60*1000);
+  },
+
+  // ── SOS ──
+  triggerSOS(){this.showSOS=true;},
+  confirmSOS(){
+    this.showSOS=false;
+    this.addNotif('SOS Triggered','Emergency services and caregiver have been alerted.','missed');
+    alert(`🚨 SOS: Calling ${this.user.ambulance||'102'}\nCaregiver: ${this.user.caregiver} — ${this.user.caregiverPhone}\n\nIn a real app this would place a call and send SMS.`);
+  },
+
+  // ── Print Report ──
+  printReport(){window.print();},
+
+  // ── Adherence ──
+  updateAdherence(){
+    const t=this.pills.length;
+    this.adherence=t===0?0:Math.round(this.pills.filter(p=>p.status==='taken').length/t*100);
+    this.updateChartLocal();
+  },
+
+  // ── Next Dose ──
+  computeNextDose(){
+    if(!this.pills.length){this.nextDoseLabel='No doses';return;}
+    const now=new Date();const cur=now.getHours()*60+now.getMinutes();
+    let best=null;
+    this.pills.forEach(p=>{
+      if(p.status==='taken')return;
+      const[h,m]=p.time.split(':').map(Number);const t=h*60+m;
+      if(t>=cur&&(!best||t<best.t))best={t,time:p.time};
+    });
+    this.nextDoseLabel=best?this.formatTime12(best.time):'All done';
+  },
+
+  // ── Charts ──
+  initCharts(){
+    const ctx=document.getElementById('weeklyChart');
+    if(ctx){
+      Chart.defaults.font.family="'DM Sans',sans-serif";
+      this.weeklyChart=new Chart(ctx,{
+        type:'line',
+        data:{
+          labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+          datasets:[{data:[80,75,90,60,85,70,this.adherence],borderColor:'#1D4ED8',backgroundColor:'rgba(29,78,216,0.07)',fill:true,tension:.4,pointRadius:4,pointBackgroundColor:'#1D4ED8',pointBorderColor:'#fff',pointBorderWidth:2}]
+        },
+        options:{plugins:{legend:{display:false},tooltip:{backgroundColor:'#0D1B35',padding:10,cornerRadius:8}},scales:{x:{grid:{display:false},border:{display:false},ticks:{color:'#556080',font:{size:11}}},y:{beginAtZero:true,max:100,grid:{color:'#EEF1F7'},border:{display:false},ticks:{color:'#556080',font:{size:11},callback:v=>v+'%'}}}}
+      });
+    }
+    const ctx2=document.getElementById('analyticsChart');
+    if(ctx2){
+      this.analyticsChartObj=new Chart(ctx2,{
+        type:'bar',
+        data:{
+          labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+          datasets:[{data:[80,75,90,60,85,70,this.adherence],backgroundColor:'rgba(29,78,216,0.15)',borderColor:'#1D4ED8',borderWidth:2,borderRadius:6}]
+        },
+        options:{plugins:{legend:{display:false}},scales:{x:{grid:{display:false},border:{display:false},ticks:{color:'#556080',font:{size:11}}},y:{beginAtZero:true,max:100,grid:{color:'#EEF1F7'},border:{display:false},ticks:{color:'#556080',font:{size:11},callback:v=>v+'%'}}}}
+      });
+    }
+    this.updateChartLocal();
+    this.syncHistory();
+  },
+
+  updateChartLocal(){
+    [this.weeklyChart,this.analyticsChartObj].forEach(chart=>{
+      if(!chart)return;
+      const label=this.formatDateLabel(this.getTodayKey());
+      const labels=chart.data.labels,data=chart.data.datasets[0].data;
+      const idx=labels.indexOf(label);
+      if(idx!==-1)data[idx]=this.adherence;
+      else{labels.push(label);data.push(this.adherence);if(labels.length>7){labels.shift();data.shift();}}
+      chart.update();
+    });
+  },
+
+  syncHistory(){
+    const u=auth.currentUser;if(!u)return;
+    const self=this;
+    const key=self.getTodayKey();
+    db.collection('users').doc(u.uid).collection('history').doc(key)
+      .set({adherence:self.adherence,date:key,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true})
+      .then(function(){
+        return db.collection('users').doc(u.uid).collection('history').orderBy('date','desc').limit(7).get();
+      })
+      .then(function(snap){
+        const labels=[],data=[];
+        snap.forEach(function(doc){labels.push(self.formatDateLabel(doc.id));data.push(doc.data().adherence||0);});
+        if(!labels.length){labels.push(self.formatDateLabel(key));data.push(self.adherence);}
+        labels.reverse();data.reverse();
+        [self.weeklyChart,self.analyticsChartObj].forEach(function(chart){
+          if(!chart)return;
+          chart.data.labels=labels;chart.data.datasets[0].data=data;chart.update();
+        });
+      })
+      .catch(function(){self.updateChartLocal();});
+  },
+
+  // ── Smart Pillbox Device Sync ──
+  startDeviceSync(){
+    var u=auth.currentUser; if(!u)return;
+    var self=this;
+
+    // Live listener on device document (ESP writes here every 2s)
+    self.hw._unsub = db.collection('users').doc(u.uid)
+      .collection('device').doc('pillbox')
+      .onSnapshot(function(snap){
+        if(!snap.exists){
+          self.hw.online=false;
+          self.hw.lastSeenLabel='Device not paired yet';
+          return;
+        }
+        var d=snap.data();
+        var lastMs = d.lastSeen&&d.lastSeen.toDate ? d.lastSeen.toDate().getTime() : 0;
+        self.hw.lastSeenMs = lastMs;
+        self.hw.online = lastMs ? (Date.now()-lastMs)<30000 : false; // online if seen <30s ago
+        self.hw.lastSeenLabel = lastMs ? self.hwRelTime(lastMs) : 'Never';
+        self.hw.activeSlot = d.activeSlot||1;
+        self.hw.state = d.state||'IDLE';
+        // weights array [slot1g, slot2g, slot3g]
+        if(d.weights&&Array.isArray(d.weights)) self.hw.weights=d.weights;
+        // slot statuses
+        if(d.slotStatus&&Array.isArray(d.slotStatus)) self.hw.slotStatus=d.slotStatus;
+
+        // When ESP reports a successful dose taken → mark on website too
+        if(d.lastEvent){
+          var ev=d.lastEvent;
+          if(ev.type==='taken'&&ev.slot&&ev.processedByWeb!==true){
+            // Find matching pill by slot label
+            var slotLabel='Slot '+ev.slot;
+            var pill=self.pills.find(function(p){return p.slot===slotLabel;});
+            if(pill&&pill.status!=='taken'){
+              self.markTaken(pill);
+              self.addNotif('Dose Confirmed ✓','Hardware verified: '+pill.name+' taken from '+slotLabel,'info');
+            }
+            // Mark processed so we don't double-fire
+            db.collection('users').doc(u.uid).collection('device').doc('pillbox')
+              .set({lastEvent:Object.assign({},ev,{processedByWeb:true})},{merge:true});
+          }
+          if(ev.type==='wrong'&&ev.slot){
+            self.addNotif('Wrong Slot!','Pill taken from wrong slot (Slot '+ev.slot+'). Please check.','missed');
+          }
+          if(ev.type==='missed'&&ev.slot){
+            var slotLabel2='Slot '+ev.slot;
+            var pill2=self.pills.find(function(p){return p.slot===slotLabel2;});
+            if(pill2&&pill2.status!=='taken'){
+              // mark missed via same logic as checkMissed
+              self.pills=self.pills.map(function(p){
+                return p.slot===slotLabel2?Object.assign({},p,{status:'missed'}):p;
+              });
+              self.generateAlerts();self.updateAdherence();self.computeNextDose();self.buildDoseLog();self.autoSave();
+            }
+          }
+        }
+      });
+
+    // Live listener on device log sub-collection
+    self.hw._logUnsub = db.collection('users').doc(u.uid)
+      .collection('device').doc('pillbox').collection('log')
+      .orderBy('ts','desc').limit(25)
+      .onSnapshot(function(snap){
+        self.hw.log=[];
+        snap.forEach(function(doc){
+          var d=doc.data();
+          var ts=d.ts&&d.ts.toDate?d.ts.toDate():new Date();
+          self.hw.log.push({
+            time:ts.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}),
+            event:d.event||'',slot:d.slot||0,type:d.type||'info'
+          });
+        });
+      });
+
+    // Tick every 15s to update "X seconds ago" label
+    self.hw._tickTimer = setInterval(function(){
+      if(self.hw.lastSeenMs){
+        self.hw.lastSeenLabel = self.hwRelTime(self.hw.lastSeenMs);
+        self.hw.online = (Date.now()-self.hw.lastSeenMs)<30000;
+      }
+    },15000);
+  },
+
+  hwRelTime(ms){
+    var s=Math.round((Date.now()-ms)/1000);
+    if(s<5)return'Just now';
+    if(s<60)return s+'s ago';
+    if(s<3600)return Math.floor(s/60)+'m ago';
+    return Math.floor(s/3600)+'h ago';
+  },
+
+  hwSlotClass(i){
+    var s=this.hw.slotStatus[i]||'';
+    if(s==='active')return'dp-slot active';
+    if(s==='taken')return'dp-slot taken';
+    if(s==='wrong')return'dp-slot wrong';
+    if(s==='toomany')return'dp-slot toomany';
+    return'dp-slot';
+  },
+
+  hwSlotStatusLabel(i){
+    var s=this.hw.slotStatus[i]||'';
+    var map={active:'⏰ Alarm',taken:'✓ Taken',wrong:'⚠ Wrong Slot',toomany:'⚠ Too Many',nopill:'✗ No Pill'};
+    return map[s]||'Waiting';
+  },
+
+  hwSlotStatusStyle(i){
+    var s=this.hw.slotStatus[i]||'';
+    if(s==='taken')return'background:var(--green-bg);color:var(--green)';
+    if(s==='wrong'||s==='nopill')return'background:var(--rose-bg);color:var(--rose)';
+    if(s==='toomany')return'background:var(--amber-bg);color:var(--amber)';
+    if(s==='active')return'background:var(--blue-bg);color:var(--blue)';
+    return'background:var(--border);color:var(--ink-soft)';
+  },
+
+  // ── Family & Caregivers ──
+  savePatient(){
+    if(!this.newPatient.name)return;
+    var id='patient_'+Date.now();
+    this.patients.push(Object.assign({id:id,active:false},this.newPatient));
+    this.newPatient={name:'',relation:'',dob:'',bloodType:''};
+    this.showAddPatient=false;
+    this.debouncedSave();
+  },
+
+  saveCaregiver(){
+    if(!this.newCaregiver.name||!this.newCaregiver.phone)return;
+    this.caregivers.push(Object.assign({},this.newCaregiver));
+    this.newCaregiver={name:'',relation:'',phone:'',email:'',access:'view',alerts:true};
+    this.showAddCaregiver=false;
+    this.debouncedSave();
+  },
+
+  simulateCaregiverAlert(){
+    var alertCaregivers=this.caregivers.filter(function(cg){return cg.alerts;});
+    if(!alertCaregivers.length){alert('No caregivers with alerts enabled. Add a caregiver with alerts ON first.');return;}
+    var patientName=this.user.patient||'Patient';
+    var missedPills=this.pills.filter(function(p){return p.status==='missed';});
+    var pillText=missedPills.length?missedPills.map(function(p){return p.name+' ('+p.time+')';}).join(', '):'Lisinopril (08:00 AM)';
+    var msg='Hi '+alertCaregivers[0].name+', this is an alert from DoseMate Pro.\n\n'+patientName+' has missed the following dose(s) today:\n'+pillText+'\n\nPlease check in with them. — DoseMate Pro';
+    var phone=alertCaregivers[0].phone.replace(/[^0-9]/g,'');
+    var url='https://wa.me/'+phone+'?text='+encodeURIComponent(msg);
+    window.open(url,'_blank');
+  },
+
+  // ── Pharmacy & Refills ──
+  savePharmacy(){
+    if(!this.newPharmacy.medication)return;
+    // Update existing or add new
+    var idx=this.pharmacyNotes.findIndex(function(n){return n.medication===this.newPharmacy.medication;}.bind(this));
+    if(idx>=0){this.pharmacyNotes[idx]=Object.assign({},this.newPharmacy);}
+    else{this.pharmacyNotes.push(Object.assign({},this.newPharmacy));}
+    this.newPharmacy={medication:'',pharmacy:'',cost:'',generic:'',insurance:'',refillAt:7,notes:''};
+    this.showAddPharmacy=false;
+    this.debouncedSave();
+  },
+
+  checkRefillAlerts(){
+    var self=this;
+    this.pills.forEach(function(p){
+      var note=self.pharmacyNotes.find(function(n){return n.medication===p.name;});
+      var threshold=note?note.refillAt:7;
+      if(p.count<=threshold&&self.settings.lowStockAlerts){
+        var existing=self.notifications.find(function(n){return n.title==='Refill Needed'&&n.msg.includes(p.name);});
+        if(!existing){
+          self.notifications.unshift({title:'Refill Needed',msg:p.name+' is running low ('+p.count+' left). Time to refill!',type:'low',time:new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})});
+        }
+      }
+    });
+  },
+
+  // ── Schedule helpers ──
+  shouldShow(p,day){return p.frequency==='Daily'||p.frequency==='Twice Daily'||(p.frequency==='Weekly'&&p.days&&p.days.includes(day));},
+  getSchStatus(p,day){
+    if(p.status==='taken')return{text:'Done',cls:'badge-green'};
+    if(p.status==='missed')return{text:'Missed',cls:'badge-rose'};
+    return{text:'Planned',cls:'badge-blue'};
+  },
+
+  // ── Utilities ──
+  getTodayKey(){const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;},
+  formatTime12(t){if(!t)return'—';const[h,m]=t.split(':').map(Number);const ap=h<12?'AM':'PM';const hh=h%12||12;return`${String(hh).padStart(2,'0')}:${String(m).padStart(2,'0')} ${ap}`;},
+  formatDateLabel(yyyyMmDd){const[y,m,d]=yyyyMmDd.split('-').map(Number);return new Date(y,m-1,d).toLocaleDateString(undefined,{month:'short',day:'numeric'});},
+};}
+</script>
+</body>
+</html>
